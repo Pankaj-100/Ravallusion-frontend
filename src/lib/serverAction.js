@@ -14,7 +14,7 @@ const MutationRequest = async ({
   }
 
   try {
-    const response = await fetch(`https://revallusion.onrender.com${path}`, {
+    const response = await fetch(`https://api.ravallusion.com${path}`, {
       method,
       //   headers,
       body,

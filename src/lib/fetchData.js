@@ -8,13 +8,15 @@ const FetchRequest = async ({ path, isTokenRequired = true }) => {
     headers.Authorization = `${cookies().get("token")?.value}`;
   }
 
+
   try {
-    const response = await fetch(`https://revallusion.onrender.com${path}`, {
+    const response = await fetch(`https://api.ravallusion.com${path}`, {
       method: "GET",
       // headers,
       // cache: "force-cache",
       // cache: "no-store",
     });
+  
 
     const responseData = await response.json();
     if (!response.ok) {

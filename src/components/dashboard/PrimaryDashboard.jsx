@@ -29,7 +29,7 @@ const PrimaryDashboard = () => {
         img: item?.video?.thumbnailUrl,
         videoId: item?.video?._id,
       }))
-    : defaultImages;
+    : [];
   
 
   useEffect(() => {
