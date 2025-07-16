@@ -168,6 +168,7 @@ const handleUpdateName = async (value) => {
         <PersonalInfo
           label="Address"
           content={address}
+          required={false}
           onClick={() => setIsOpenAddress(true)}
         />
       </div>
@@ -202,6 +203,7 @@ const handleUpdateName = async (value) => {
           isLoading={isLoadingAddress}
           label="Address"
           type="text"
+          
           content={address}
           onClick={() => setIsOpenAddress(false)}
           onSave={(value) => {
@@ -218,7 +220,7 @@ const PersonalInfo = ({ label, content, onClick }) => {
     <div className="py-1">
       <label
         htmlFor="name"
-        className="text-[13px] ml-1 text-gray-400 important"
+        className="text-[13px] ml-1 text-gray-400 important "
       >
         {label}
       </label>

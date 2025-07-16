@@ -7,14 +7,16 @@ import { useGetSubscriptionDetailQuery } from '@/store/Api/course'
 
 const MySubscription = () => {
     const { data, isLoading } = useGetSubscriptionDetailQuery();
-   
+   const plantype =data?.data?.subscriptionDetails?.planType;
+
 
     return isLoading ? <div className='flex items-center justify-center min-h-[70vh]'><SimpleLoader /></div> :  (
         <div className='pt-4 lg:pt-0'>
             <h2 className='text-lg font-semibold'>My Subscription</h2>
 
             <div className={"my-9"}>
-                <UpgradePlan />
+               {plantype=="Beginner"?      <UpgradePlan /> : ""}
+          
             </div>
 
             <div>
