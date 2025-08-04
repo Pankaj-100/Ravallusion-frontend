@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   planId: null,
   planType: null,
+  beginnerFirstVideo: false,
   planPrice: null,
   usdPrice:null,
   isIndia: true,
@@ -18,6 +19,8 @@ const initialState = {
   videoTitle: "",
   paymentSuccess:false,
    sidebarTabIndex: 0,
+   courseType: null, // 'photoshop' or 'premier-pro'
+  shouldPlayFirstVideo: false,
 }
 
 export const generalSlice = createSlice({
@@ -27,6 +30,17 @@ export const generalSlice = createSlice({
       setSidebarTabIndex: (state, action) => {
     state.sidebarTabIndex = action.payload;
   },
+
+      setBeginnerFirstVideo: (state, action) => {
+      state.beginnerFirstVideo = action.payload;
+    },
+        setCourseType: (state, action) => {
+      state.courseType = action.payload;
+    },
+    setShouldPlayFirstVideo: (state, action) => {
+      state.shouldPlayFirstVideo = action.payload;
+    },
+
     setPlanId: (state, actions) => {
       state.planId = actions.payload;
     },
@@ -82,8 +96,11 @@ export const { setVideoIdOfcurrentVideo,setVideoTitle, setPaymentSuccess,
   setSearchValue,
   setSearchHistory,
   setIsIndia,
+    setCourseType,
+  setShouldPlayFirstVideo,
   setUpdatedPercentageWatched,
   setSidebarTabIndex,
+   setBeginnerFirstVideo,
   setCourseId,
   setFirstVideoId, setPlanId, setPlanPrice, setPlanType,setUsdPrice, setIntroductoryVideoscount,
   setBookmarkCount, setSubmoduleId } = generalSlice.actions

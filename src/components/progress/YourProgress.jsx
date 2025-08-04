@@ -1,8 +1,7 @@
 "use client";
+
 import React, { useState } from "react";
-import { Trophy } from "lucide-react";
-import { ChevronDown } from "lucide-react";
-import { Dot } from "lucide-react";
+import { Trophy, ChevronDown, Dot } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -17,29 +16,26 @@ import {
   useGetMyCertificateQuery,
 } from "@/store/Api/courseProgress";
 import { cdnDomain } from "@/lib/functions";
-import LoadingSpinner, { SimpleLoader } from "../common/LoadingSpinner";
+import { SimpleLoader } from "../common/LoadingSpinner";
 
 function YourProgress() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // 👈 track dropdown state
 
- const { data: progressData, isLoading } = useGetCourseProgressQuery();
- console.log(progressData,"name")
-  const { data: certificateData, isCertficateLoading } =
-    useGetMyCertificateQuery();
+  const { data: progressData, isLoading } = useGetCourseProgressQuery();
+  const { data: certificateData, isCertficateLoading } = useGetMyCertificateQuery();
 
   const planName = progressData?.data?.planName;
-  const totalVideos = progressData?.data?.yourProgress.totalVideos;
-  const completedVideos = progressData?.data?.yourProgress.completedVideos;
+  const totalVideos = progressData?.data?.yourProgress?.totalVideos || 0;
+  const completedVideos = progressData?.data?.yourProgress?.completedVideos || 0;
 
-  const perCompleted = Math.ceil((completedVideos / totalVideos) * 100);
+  const perCompleted = totalVideos === 0 ? 0 : Math.ceil((completedVideos / totalVideos) * 100);
   const isCourseCompleted = perCompleted === 100;
   const certificate = certificateData?.data?.certificates?.[0];
 
   const isDataLoading = isLoading || isCertficateLoading;
   const showCelebration = isCourseCompleted && !certificate;
 
-
-  
   const handleDownloadCertificate = () => {
     if (!certificate) {
       setOpenDialog(true);
@@ -54,20 +50,24 @@ function YourProgress() {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger>
-          <div className="flex gap-1 items-center px-2">
+          <div className="flex gap-1 items-center px-1 cursor-pointer">
             <CustomPieChart percentage={perCompleted}>
               <div className="p-4">
                 <Trophy className="relative z-10 w-5 h-5" />
               </div>
             </CustomPieChart>
-            <div className="text-md font-semibold md:block hidden text-nowrap">
-              {" "}
-              Your Progress
-            </div>
+           <div className="text-md font-semibold hidden md:block lg:hidden xl:block whitespace-nowrap">
+  Your Progress
+</div>
             <div>
-              <ChevronDown size={22} />
+              <ChevronDown
+                size={22}
+                className={`transition-transform duration-300 ${
+                  isDropdownOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
             </div>
           </div>
         </DropdownMenuTrigger>
@@ -82,24 +82,22 @@ function YourProgress() {
           {showCelebration && <Celebration />}
 
           {!isDataLoading && (
-            <div className="text-[#fff] px-5 pt-5 pb-3 ">
+            <div className="text-[#fff] px-5 pt-5 pb-3">
               <div className="flex text-lg gap-2">
-                <div className="font-bold ">Course Progress</div>
+                <div className="font-bold">Course Progress</div>
                 <div className="self-center opacity-80">
                   <Dot />
                 </div>
-                <div className="opacity-80 ">{planName}</div>
+                <div className="opacity-80">{planName}</div>
               </div>
 
               <div className="mt-4 flex gap-2 items-center">
                 <div>
                   <CustomPieChart percentage={perCompleted}>
-                    {" "}
-                    <div className="py-4 m-8 font-semibold text-xl flex gap-[0.1rem] ">
-                      {" "}
+                    <div className="py-4 m-8 font-semibold text-xl flex gap-[0.1rem]">
                       <div>{perCompleted}</div>
                       <div className="!text-md"> % </div>
-                    </div>{" "}
+                    </div>
                   </CustomPieChart>
                 </div>
 
@@ -107,13 +105,14 @@ function YourProgress() {
                   <div className="font-semibold">
                     {completedVideos} of {totalVideos} complete.
                   </div>
+
                   {!isCourseCompleted && (
                     <div className="text-sm mt-1">
-                      <div>Finish the course videos and submit assignment </div>
+                      <div>Finish the course videos and submit assignment</div>
                       <div>to get your certificate</div>
                     </div>
                   )}
-                  {false && <Celebration />}
+
                   {isCourseCompleted && (
                     <div>
                       <div className="text-sm mt-1 break-all text-[#FFEA47]">

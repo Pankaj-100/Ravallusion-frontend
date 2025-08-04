@@ -116,7 +116,9 @@ const PrimaryDashboard = () => {
           </motion.div>
         </div>
       ))}
+      
     </CarouselWrapper>
+
   );
 };
 

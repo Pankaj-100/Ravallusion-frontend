@@ -10,7 +10,7 @@ const CertificateSection = ({ certificate }) => {
     <LandingContainer className="!h-fit pt-12 sm:pt-[7.5rem] !flex !flex-row justify-center">
       <div className="flex gap-28 items-center w-full flex-wrap">
 
-        <div className="p-5 py-[50px] rounded-2xl certificate backdrop-blur-xl">
+        <div className="p-5 py-[20px] rounded-2xl certificate backdrop-blur-xl">
           <Image
             src={certificate.image} 
             width={1000}

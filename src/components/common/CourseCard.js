@@ -68,12 +68,12 @@ const CourseCard = ({ course }) => {
 const LatestTutorialVideo = ({ videoUrl, thumbnailUrl, setIsCustomOpen }) => {
   return (
     <div className="flex items-center justify-center">
-      <div className="relative w-full flex items-center justify-center border-2 border-gray-500 backdrop-blur-lg rounded-xl overflow-hidden mt-2 ">
-        <button className="flex items-center justify-center outline-none absolute top-1 right-2 z-50 rounded-full border border-gray-300"
+      <div className="relative w-full flex items-center justify-center border-2 border-gray-500 backdrop-blur-lg rounded-xl overflow-hidden mt-10 ">
+        <button className="flex items-center justify-center outline-none absolute top-2 right-2 z-50 rounded-full border border-gray-300"
           onClick={(e) => { setIsCustomOpen((prev) => !prev); e.stopPropagation() }}>
           <CrossIcon width={24} height={24} />
         </button>
-        <div className="w-[300px] md:w-full h-auto relative">
+        <div className="min-w-[350px] md:w-full lg:h-[450px] md:h-[400px]  relative">
           <VideoPlayer source={videoUrl} poster={thumbnailUrl} latestVideo={true} iscourse={false} />
         </div>
       </div>

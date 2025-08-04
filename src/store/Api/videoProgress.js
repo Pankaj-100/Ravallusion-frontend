@@ -26,6 +26,7 @@ export const videoProgressApi = createApi({
         credentials: "include",
         body: { watchTime },
       }),
+      //  invalidatesTags: [{ type: "VideoProgress", id: "LIST" }],
     }),
   }),
 });

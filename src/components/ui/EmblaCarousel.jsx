@@ -12,18 +12,23 @@ const TWEEN_FACTOR_BASE = 0.52;
 const numberWithinRange = (number, min, max) =>
   Math.min(Math.max(number, min), max);
 
-const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange }) => {
- 
+const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange, forceRefresh }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  useEffect(() => {
+    if (forceRefresh) {
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [forceRefresh]);
+
   useEffect(() => {
     const videoRef = videoRefs.current[index];
     if (!videoRef) return;
 
     if (!isActive) {
-      
       if (videoRef.pause) videoRef.pause();
       if (videoRef.seekTo) videoRef.seekTo(0); 
     } else {
-     
       if (videoRef.pause) videoRef.pause();
     }
   }, [isActive, index]);
@@ -33,6 +38,7 @@ const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange }) => {
       <div className="relative w-full h-fit self-center">
         <div className="p-3 carousel-bg h-96">
           <VideoPlayer
+            key={`video-${index}-${refreshKey}`} // Force re-render when refreshKey changes
             source={item.video.videoUrl}
             poster={item.video.thumbnailUrl}
             ref={(el) => {
@@ -65,6 +71,7 @@ const EmblaCarousel = ({ slides, options }) => {
   const tweenNodes = useRef([]);
   const videoRefs = useRef([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [forceRefreshIndices, setForceRefreshIndices] = useState({});
 
   // Initialize videoRefs with the correct length
   useEffect(() => {
@@ -117,7 +124,7 @@ const EmblaCarousel = ({ slides, options }) => {
 
   const handleVideoPlayChange = useCallback((isPlaying) => {
     if (!emblaApi || !autoplay.current) return;
-
+console.log("Video play state changed:", isPlaying);
     if (isPlaying) {
       autoplay.current.stop();     // Stop carousel autoplay
     } else {
@@ -137,6 +144,12 @@ const EmblaCarousel = ({ slides, options }) => {
       if (currentVideoRef.pause) currentVideoRef.pause();
       if (currentVideoRef.seekTo) currentVideoRef.seekTo(0);
     }
+
+    // Force refresh of the slide that's coming into view
+    setForceRefreshIndices(prev => ({
+      ...prev,
+      [currentIndex]: prev[currentIndex] ? prev[currentIndex] + 1 : 1
+    }));
   }, []);
 
   useEffect(() => {
@@ -184,6 +197,7 @@ const EmblaCarousel = ({ slides, options }) => {
                   index={index}
                   item={item}
                   onPlayChange={handleVideoPlayChange}
+                  forceRefresh={forceRefreshIndices[index]}
                 />
               </div>
             </div>

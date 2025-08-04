@@ -9,7 +9,7 @@ export async function middleware(request) {
     const restrictedPaths = ["/dashboard", "/dashboard/introductory",
         "/dashboard/player-dashboard", "/dashboard/bookmarked-videos",
         "/dashboard/profile", "/dashboard/search", "/subscription-plan","/mycart"];
-    const authPaths = ["/login","/verify-otp"];
+    const authPaths = ["/login","/verify-otp","/"];
 
     // Static file handling (skip middleware for these)
     if (

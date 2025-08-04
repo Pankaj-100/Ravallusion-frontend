@@ -15,14 +15,14 @@ export default function DashboardLayout({ children }) {
   }, [isLoading,data])
   return (
     <div className="min-h-screen bg-[var(--Surface)]">
-      <div className=" md:h-16 xl:h-20" />
+      <div className=" md:h-16 xl:h-10" />
 
-      <div className="sticky top-0 z-50 md:px-20 xl:px-32 bg-[var(--Surface)]">
+      <div className="sticky top-0 z-50 md:px-20 xl:px-20 bg-[var(--Surface)]">
         <DashboardNavbar />
       </div>
 
 
-      <div className=" md:px-20 xl:px-32 pb-2">
+      <div className=" md:px-20 xl:px-15 pb-2">
         {children}
       </div>
     </div>

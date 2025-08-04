@@ -17,7 +17,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { setSidebarTabIndex } from  "@/store/slice/general";
+import { setSidebarTabIndex,setCourseType,setShouldPlayFirstVideo } from  "@/store/slice/general";
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -85,7 +85,7 @@ const DashboardNavbar = () => {
         />
       )}
       {show ? (
-        <div className="flex gap-x-5 lg:gap-x-7 items-center w-2/3 lg:w-1/2">
+        <div className="flex gap-x-5 lg:gap-x-6 items-center w-2/3 lg:w-1/2">
           <button
             className="cursor-pointer"
             onClick={() => {
@@ -99,7 +99,7 @@ const DashboardNavbar = () => {
 
           <div className="flex-grow">
             {urlpath === "profile" && (
-              <h1 className="text-lg font-semibold  ">Profile</h1>
+              <h1 className="lg:text-lg font-semibold  ">Profile</h1>
             )}
             {urlpath === "introductory" && (
               <>
@@ -128,17 +128,17 @@ const DashboardNavbar = () => {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="w-12 h-12 relative">
             <Image src="/logo.png" alt="logo" fill className="object-contain" />
           </div>
-          <span className="text-lg font-semibold whitespace-nowrap">
+          <span className="xl:text-lg   font-semibold whitespace-nowrap ">
             Ravallusion Academy
           </span>
         </div>
       )}
 
-      <div className="flex gap-x-2 items-center">
+      <div className="flex gap-x-1 items-center my-auto">
         {urlpath != "search" && (
           <div
             className="p-3 border border-gray-600 relative cursor-pointer"
@@ -309,7 +309,7 @@ const ProfileComponent = ({ href, avatar }) => {
 
   return (
     <div
-      className="ml-3 bg-gray-300 rounded-full w-11 h-11 relative hidden lg:block cursor-pointer"
+      className=" bg-gray-300 rounded-full xl:w-11 xl:h-11  lg:w-9 lg:h-9 relative hidden lg:block cursor-pointer"
       onClick={() => {
         router.push(href);
       }}
@@ -365,7 +365,7 @@ const BoxComponent = ({
     <div className="relative hidden lg:block" ref={boxRef}>
       <div
         onClick={handleClick}
-        className={`px-4 py-3 flex flex-col bg-[#040C19] border-x border-t ${
+        className={`xl:px-4 lg:px-2 py-3 flex flex-col bg-[#040C19] border-x border-t ${
           isOpenBoxDropdown ? "" : "border-b"
         } border-[var(--neon-purple)] cursor-pointer relative`}
       >
@@ -408,8 +408,9 @@ const BoxComponent = ({
 const BoxDropdown = ({ title1, title2, href, setIsOpenBoxDropdown }) => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const handleClick = () => {
+  const handleClick = (title) => {
      dispatch(setSidebarTabIndex(0));
+       dispatch(setCourseType(title === "Photoshop" ? "photoshop" : "premier-pro"));
     router.push(href);
     setIsOpenBoxDropdown(false);
   };
@@ -422,13 +423,13 @@ const BoxDropdown = ({ title1, title2, href, setIsOpenBoxDropdown }) => {
     >
       <div className="flex flex-col gap-y-1">
         <span
-          onClick={handleClick}
+                onClick={() => handleClick(title1)}
           className="block px-4 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
         >
           {title1}
         </span>
         <span
-          onClick={handleClick}
+                onClick={() => handleClick(title2)}
           className="block px-4 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
         >
           {title2}

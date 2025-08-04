@@ -1,7 +1,10 @@
 import { mapToObject, objectToMap } from "@/lib/functions";
 import { Bookmarked, Lock, OrangePlay } from "@/lib/svg_icons";
 import { useDeleteBookmarkMutation } from "@/store/Api/introAndBookmark";
-import { setSidebarTabIndex } from  "@/store/slice/general";
+import {
+  PremiumIcon
+} from "@/lib/svg_icons";
+import { setBeginnerFirstVideo } from "@/store/slice/general";
 import {
   useGetCourseProgressQuery,
   useGetVideoProgressQuery,
@@ -11,7 +14,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
+import { useDispatch } from 'react-redux';
 export const IntroductoryList = ({
   heading,
   subItems,
@@ -124,23 +127,25 @@ export const LessonCard = ({
   description,
   duration,
   isplaying,
+  level,
+ isFirstSubmodule,
   iscourse=false,
   bookmarkedId,
   bookmark = false,
   introductory = false,
   onPlay,
+   isFirstVideo = false,
 
   isLocked = false 
 }) => {
   const route = useRouter();
   const [progress, setProgress] = useState(0);
   const path = usePathname();
-
   const [deleteBookmark] = useDeleteBookmarkMutation();
   const { courseId, updatedPercentageWatched, videoIdOfCurrentVideo } = useSelector((state) => state.general);
-
+ const dispatch = useDispatch();
   const videos = useSelector((state) => state.course.videos);
-
+ 
   const MapVideos = objectToMap(videos);
   const currentVideoData = MapVideos.get(videoId);
 
@@ -153,6 +158,7 @@ export const LessonCard = ({
   const { data: courseProgress } = useGetCourseProgressQuery(courseId);
 
   useEffect(() => {
+    
     const foundVideo = courseProgress?.data?.courseProgress?.find(
       (video) => video.video === videoId
     );
@@ -167,21 +173,26 @@ export const LessonCard = ({
     }
   }, [updatedPercentageWatched, videoId, videoIdOfCurrentVideo]);
 
-  const fetchVideo = () => {
+const fetchVideo = () => {
+  // Allow access if:
+  // 1. It's the first video in any submodule (isFirstVideo)
+  // 2. OR it's in the first submodule of a module (handled by parent)
+  // 3. OR it's an introductory/bookmark video
+  // 4. OR it's unlocked through normal progression
+  if (!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) return;
   
-    if (isLocked || (!isVideoUnlocked && !introductory && !bookmark)) return;
-
-    if (introductory) {
-    
-      route.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
-      onPlay();
-      return;
-    }
-
-    const level = path.includes("beginner") ? "beginner" : "advanced";
-    route.push(`/dashboard/player-dashboard/${level}?videoId=${videoId}`);
+  if (introductory) {
+    route.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
     onPlay();
-  };
+    return;
+  }
+
+  
+   const levels = level==1 ? "beginner" : "advanced";
+    dispatch(setBeginnerFirstVideo(isFirstSubmodule));
+  route.push(`/dashboard/player-dashboard/${levels}?videoId=${videoId}`);
+  onPlay();
+};
 
   const removeBookmark = async () => {
     try {
@@ -194,15 +205,19 @@ export const LessonCard = ({
   };
 
   return (
-    <div className="flex gap-x-3 items-center cursor-pointer px-3">
+  <div className="flex gap-x-3 items-center cursor-pointer px-3">
       <div
-        className={`rounded-t-xl rounded-b-lg w-36 h-20 relative ${(!isVideoUnlocked || isLocked) && !introductory && !bookmark ? "brightness-30 cursor-not-allowed" : ""
+        className={`rounded-t-xl rounded-b-lg w-36 h-20 relative ${(!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) ? "brightness-30 cursor-not-allowed" : ""
           }`}
         onClick={fetchVideo}
       >
-        {(isLocked || (!isVideoUnlocked && !introductory && !bookmark)) && (
+        {(!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) && (
           <div className='z-50 absolute top-[50%] left-[50%] translate-y-[-50%] translate-x-[-50%] h-full flex items-center justify-center backdrop-blur-sm bg-[#0000001F] w-full'>
             <Lock width={30} height={30} />
+            {level===2 ? <div className="absolute top-2 left-2 rounded-full p-1 z-100">
+              <PremiumIcon />
+        
+        </div>:""}
           </div>
         )}
 
@@ -212,6 +227,12 @@ export const LessonCard = ({
           fill
           className={`rounded-t-xl rounded-b-lg ${isplaying && "brightness-50"}`}
         />
+
+      
+           {level===2 ? <div className="absolute top-2 left-2 rounded-full p-1 z-100">
+              <PremiumIcon />
+        
+        </div>:""}
         <span
           style={{
             background: "rgba(0, 0, 0, 0.50)",

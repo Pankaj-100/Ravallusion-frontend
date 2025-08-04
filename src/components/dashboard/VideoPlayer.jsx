@@ -61,10 +61,11 @@ const VideoPlayer = ({
   iscourse,
   chapterRef,
   chapters,
+    // setVideoPlaying,
 }) => {
 
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
-
+  const firstsubmodule = useSelector((state) => state.general.beginnerFirstVideo);
   const [firstPlay, setFirstPlay] = useState(true);
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -101,7 +102,9 @@ const VideoPlayer = ({
   const imgSrc = poster;
 
   const [src, setSrc] = useState(`${cdnDomain}/${source}/720p.m3u8`);
-  const { refetch: refetchCourseProgress } = useGetCourseProgressQuery();
+  
+ 
+    const { refetch: refetchCourseProgress } = useGetCourseProgressQuery();
 
   if(sidebarTabIndex==1)
   {
@@ -222,6 +225,7 @@ useEffect(() => {
   const foundVideo = courseProgress?.data?.courseProgress?.find(
     (v) => v.video === videoId
   );
+  console.log("foundVideo", foundVideo);
   setIsVideoCompleted(foundVideo?.isCompleted || false); 
 
   const lastPosition = foundVideo?.lastPosition || 0;
@@ -422,10 +426,15 @@ const handleEnded = async () => {
   setPlaying(false);
   setShowRestartButton(true);
   setIsVideoCompleted(true);
+// setVideoPlaying(false)  
+
+  
 
   try {
+      
+
     const data = await refetchCourseProgress();
-    console.log("hihi",data)
+  
   } catch (error) {
     console.error("Error refetching progress:", error);
   }
@@ -449,63 +458,51 @@ const handleEnded = async () => {
     }
   };
 
-const handleForward = () => {
-
-  if(iscourse==false)
-  {
-     const currentTime = playerRef.current.getCurrentTime();
-  const newTime = currentTime + 10;
-        if (isVideoCompleted || newTime <= maxWatchTime||iscourse==false) {
-    playerRef.current.seekTo(newTime, "seconds");
-  }
-    return;
-  }
-  
-  if (!playerRef.current) return;
-  
-  const currentTime = playerRef.current.getCurrentTime();
-  const newTime = currentTime + 10;
-
-  if (isVideoCompleted || newTime <= maxWatchTime) {
-    playerRef.current.seekTo(newTime, "seconds");
-  }
-};
 const handleSeekChange = (e) => {
-
-  if(iscourse==false)
-  {
-      const value = parseFloat(e.target.value);
+  const value = parseFloat(e.target.value);
   const targetTime = (value / 100) * duration;
-   setPlayed(value);
+
+  // If course is not active or video is completed, allow seeking anywhere
+  if (!iscourse || isVideoCompleted||firstsubmodule) {
+    setPlayed(value);
     setShowRestartButton(false);
     playerRef.current?.seekTo(value / 100, "fraction");
     return;
   }
-  const value = parseFloat(e.target.value);
-  const targetTime = (value / 100) * duration;
 
-  if (isVideoCompleted || targetTime <= maxWatchTime) {
+  // the maxWatchTime restriction
+  if (targetTime <= maxWatchTime) {
     setPlayed(value);
     setShowRestartButton(false);
     playerRef.current?.seekTo(value / 100, "fraction");
   }
 };
 
-
 const handleSeekMouseDown = () => {
-
-    if(iscourse==false)
-  {
-      const value = parseFloat(progressRef.current.value);
-  const targetTime = (value / 100) * duration;
-      playerRef.current?.seekTo(value / 100, "fraction");
+  const value = parseFloat(progressRef.current.value);
+  
+  // If course is not active or video is completed, allow seeking anywhere
+  if (!iscourse || isVideoCompleted||firstsubmodule) {
+    playerRef.current?.seekTo(value / 100, "fraction");
+    return;
   }
 
-  const value = parseFloat(progressRef.current.value);
+  // maxWatchTime restriction
   const targetTime = (value / 100) * duration;
-
-  if (isVideoCompleted || targetTime <= maxWatchTime) {
+  if (targetTime <= maxWatchTime) {
     playerRef.current?.seekTo(value / 100, "fraction");
+  }
+};
+
+const handleForward = () => {
+  if (!playerRef.current) return;
+  
+  const currentTime = playerRef.current.getCurrentTime();
+  const newTime = currentTime + 10;
+
+  // If course is not active or video is completed, allow forwarding anywhere
+  if (!iscourse || isVideoCompleted || newTime <= maxWatchTime||firstsubmodule) {
+    playerRef.current.seekTo(newTime, "seconds");
   }
 };
 
@@ -513,15 +510,17 @@ const handleSeekMouseDown = () => {
  const handleProgress = (state) => {
    if (!progressRef.current) return;
   const { played, playedSeconds, loaded } = state;
-
+  
   const progressPercentage = played * 100;
   const loadedPercentage = loaded * 100;
 
   setPlayed(progressPercentage);
   setCurrentTime(playedSeconds);
 
+
   if (!isVideoCompleted && playedSeconds > maxWatchTime) {
     setMaxWatchTime(playedSeconds);
+     
   }
 
   if (chapters?.length > 0) {
@@ -634,7 +633,12 @@ const handleSeekMouseDown = () => {
   //   console.error("An error occurred while loading the video:", error);
   //   toast.error("An error occurred while loading the video");
   // };
+const handleVideoPlayerInteraction = () => {
 
+ 
+    onPlayChange(true); 
+  
+};
   const handleQualityChange = (quality) => {
     // if (quality === 360) {
     //   setSelectedQuality("Auto");
@@ -764,10 +768,12 @@ const handleSeekMouseDown = () => {
         containerRef.current.classList.add("show-controls");
         setShowControls(true);
         resetTimeout();
+        handleVideoPlayerInteraction();
       }}
       onTouchStart={() => {
         containerRef.current.classList.add("show-controls");
         setShowControls(true);
+          handleVideoPlayerInteraction();
 
         if (timeoutId.current) {
           clearTimeout(timeoutId.current);
@@ -791,6 +797,7 @@ const handleSeekMouseDown = () => {
           url={src}
           playing={playing}
           controls={false}
+          
           width="100%"
           height="100%"
           playbackRate={playbackSpeed}
@@ -798,7 +805,7 @@ const handleSeekMouseDown = () => {
           // light={false}
              playIcon={<div className="absolute"   style={{
             
-                zIndex: 199,
+                zIndex: 199,height:60,width:60,
               
               }}>{playIcon} </div>}
           light={
@@ -850,13 +857,15 @@ const handleSeekMouseDown = () => {
           
             setPlaying(true);
              onPlayChange(true); 
+            
 
             const id = setInterval(() => {
               if (playerRef.current && setWatchTime) {
                 const currentTime = playerRef.current.getCurrentTime();
-                setWatchTime(currentTime);
+               setWatchTime(currentTime);
+               
               }
-            }, 2000); //Todo:  need to change in 1 minutes
+            }, 5000); //Todo:  need to change in 1 minutes
             setIntervalId(id);
           
           }}
@@ -951,11 +960,7 @@ const handleSeekMouseDown = () => {
 
 <input
   type="range"
-  className={`track-range ${
-    isVideoCompleted || (duration && (played / 100) * duration <= maxWatchTime|| iscourse==false)
-      ? "cursor-pointer"
-      : "cursor-not-allowed"
-  }`}
+ className="track-range cursor-pointer" // Always show pointer cursor
   ref={progressRef}
   min={0}
   max={100}

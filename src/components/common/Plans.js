@@ -21,7 +21,6 @@ const Plans = ({ plans, showSkeleton = false }) => {
 
   const isIndia = useSelector((state) => state.general.isIndia);
 
-  // console.log("Plans", plans, plans?.[0]?.usd_price);
 
   useEffect(() => {
     const updateCountBasedOnScreenSize = () => {
@@ -88,12 +87,12 @@ const Plans = ({ plans, showSkeleton = false }) => {
                 X 1
               </span>
               {/* <span>{plans[0].watch}</span> */}
-              <span className="text-xl font-semibold">Watch on 1 device</span>
+              <span className="lg:text-xl font-semibold">Watch on 1 device</span>
             </div>
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <Check className="border-2 rounded-full p-1" size={27} />
               {/* <span>{plans[0].access}</span> */}
-              <span className="text-xl font-semibold">Access to Advance content</span>
+              <span className="lg:text-xl font-semibold">Access to Beginner content</span>
             </div>
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <div className="relative w-fit">
@@ -103,12 +102,12 @@ const Plans = ({ plans, showSkeleton = false }) => {
                 </span>
               </div>
               {/* <span>{plans[0].quality}</span> */}
-              <span className="text-xl font-semibold">Standard FHD quality</span>
+              <span className="lg:text-xl font-semibold">Standard FHD quality</span>
             </div>
-            <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm pr-2">
+            <div className="flex gap-7  items-center 2xl:gap-9 2xl:text-sm pr-2">
               <DevicesIcon />
               {/* <span>{plans[0].devices}</span> */}
-              <span className="text-xl font-semibold"> Watch on Laptop, Mobile, Tab and ipad</span>
+              <span className="lg:text-xl font-semibold"> Watch on Laptop, Mobile, Tab and ipad</span>
             </div>
           </div>
 
@@ -154,12 +153,12 @@ const Plans = ({ plans, showSkeleton = false }) => {
                 X 1
               </span>
               {/* <span>{plans[1].watch}</span> */}
-              <span className="text-xl font-semibold">Watch on 1 device</span>
+              <span className="lg:text-xl font-semibold">Watch on 1 device</span>
             </div>
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <Check className="border-2 rounded-full p-1" size={27} />
               {/* <span>{plans[1].access}</span> */}
-              <span className="text-xl font-semibold">Access to Beginner content</span>
+              <span className="lg:text-xl font-semibold">Access to Advance content</span>
             </div>
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <div className="relative w-fit">
@@ -169,12 +168,12 @@ const Plans = ({ plans, showSkeleton = false }) => {
                 </span>
               </div>
               {/* <span>{plans[1].quality}</span> */}
-              <span className="text-xl font-semibold">Standard FHD quality</span>
+              <span className="lg:text-xl font-semibold">Standard FHD quality</span>
             </div>
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm pr-2">
               <DevicesIcon />
               {/* <span>{plans[1].devices}</span> */}
-              <span className="text-xl font-semibold">Watch on Laptop, Mobile, Tab and ipad</span>
+              <span className="lg:text-xl font-semibold">Watch on Laptop, Mobile, Tab and ipad</span>
             </div>
           </div>
           <GlowButton

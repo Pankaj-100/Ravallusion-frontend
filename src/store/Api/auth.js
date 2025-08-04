@@ -77,6 +77,14 @@ export const authApi = createApi({
       }),
       invalidatesTags: ["user"],
     }),
+        removeAvatar: builder.mutation({
+      query: () => ({
+        url: "user/avatar",
+        method: "DELETE",
+      
+      }),
+      invalidatesTags: ["user"],
+    }),
     deleteAccount: builder.mutation({
       query: () => ({
         url: "user/delete-account",
@@ -103,4 +111,5 @@ export const {
   useHasSubscriptionQuery,
   useGetActivePaymentGatewayQuery,
   useUpdateAddressMutation,
+  useRemoveAvatarMutation,
 } = authApi;

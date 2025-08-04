@@ -10,6 +10,7 @@ import {
   useUpdateAvatarMutation,
   useUpdateMobileMutation,
   useUpdateNameMutation,
+  useRemoveAvatarMutation,
 } from "@/store/Api/auth";
 import { toast } from "react-toastify";
 import { SimpleLoader } from "../common/LoadingSpinner";
@@ -17,20 +18,15 @@ import { SimpleLoader } from "../common/LoadingSpinner";
 const PersonalInfoCard = () => {
   const { data, isLoading: loading } = useGetUserDetailQuery();
   const [updateName, { isLoading }] = useUpdateNameMutation();
-  const [updateMobile, { isLoading: isLoadingMobile }] =
-    useUpdateMobileMutation();
-  const [updateAddress, { isLoading: isLoadingAddress }] =
-    useUpdateAddressMutation();
-  const [updateAvatar, { isLoading: isLoadingAvatar }] =
-    useUpdateAvatarMutation();
+  const [updateMobile, { isLoading: isLoadingMobile }] = useUpdateMobileMutation();
+  const [updateAddress, { isLoading: isLoadingAddress }] = useUpdateAddressMutation();
+  const [updateAvatar, { isLoading: isLoadingAvatar }] = useUpdateAvatarMutation();
+  const [removeAvatar, { isLoading: isRemovingAvatar }] = useRemoveAvatarMutation();
 
   const userName = data?.data?.user?.name || "Ravallusion";
   const email = data?.data?.user?.email || "NA";
   const avatar = data?.data?.user?.avatar || "/profilepic.jpeg";
   const mobileNumber = data?.data?.user?.mobile || "NA";
-  //   const addressData = data?.data?.user?.address || "NA";
-
-  console.log("User: ", data?.data?.user, data?.data?.user?.address);
 
   const [name, setName] = useState(userName);
   const [phone, setPhone] = useState(mobileNumber);
@@ -40,7 +36,14 @@ const PersonalInfoCard = () => {
   const [isOpenPhone, setIsOpenPhone] = useState(false);
   const [isOpenAddress, setIsOpenAddress] = useState(false);
 
-  // Function to handle saving updated name or phone
+  useEffect(() => {
+    if (data?.data?.user) {
+      setName(userName);
+      setPhone(mobileNumber);
+      setAddress(data.data.user.address || "");
+    }
+  }, [userName, mobileNumber, data?.data?.user?.address]);
+
   const handleSave = (field, value) => {
     if (field === "name") setName(value);
     if (field === "phone") setPhone(value);
@@ -55,37 +58,54 @@ const PersonalInfoCard = () => {
     formData.append("file", file);
 
     try {
-      const res = await updateAvatar(formData).unwrap();
+      await updateAvatar(formData).unwrap();
+      toast.success("Profile image updated successfully");
     } catch (error) {
       console.log(error);
       toast.error(error?.data?.message || "Failed to upload image");
     }
   };
 
-const handleUpdateName = async (value) => {
-  // Allow only letters, spaces, hyphens and apostrophes (e.g., O'Connor)
-  const nameRegex = /^[a-zA-Z\s'-]+$/;
+  const handleRemoveAvatar = async () => {
+   
 
-  if (!nameRegex.test(value)) {
-    toast.error("No special characters allowed in name field");
-    return;
-  }
+    try {
+      await removeAvatar().unwrap();
+      toast.success("Profile image removed successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.data?.message || "Failed to remove profile image");
+    }
+  };
 
-  handleSave("name", value);
-  try {
-    const res = await updateName({ name: value }).unwrap();
-  } catch (error) {
-    console.log("error while Updating name", error);
-    toast.error(error?.data?.message);
-  } finally {
-    setIsOpenName(false);
-  }
-};
+  const handleUpdateName = async (value) => {
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(value)) {
+      toast.error("No special characters allowed in name field");
+      return;
+    }
+
+    handleSave("name", value);
+    try {
+      await updateName({ name: value }).unwrap();
+    } catch (error) {
+      console.log("error while Updating name", error);
+      toast.error(error?.data?.message);
+    } finally {
+      setIsOpenName(false);
+    }
+  };
 
   const handleUpdateMobile = async (value) => {
+    const phoneRegex = /^\+\d{1,4}\d{10}$/;
+    if (!phoneRegex.test(value)) {
+      toast.error("Enter a valid phone number with country code and 10 digits");
+      return;
+    }
+
     handleSave("phone", value);
     try {
-      const res = await updateMobile({ mobile: value }).unwrap();
+      await updateMobile({ mobile: value }).unwrap();
     } catch (error) {
       console.log("error while Updating phone", error);
       toast.error(error?.data?.message);
@@ -97,38 +117,35 @@ const handleUpdateName = async (value) => {
   const handleUpdateAddress = async (value) => {
     handleSave("address", value);
     try {
-      const res = await updateAddress({ address: value }).unwrap();
+      await updateAddress({ address: value }).unwrap();
     } catch (error) {
-      console.log("error while Updating phone", error);
+      console.log("error while Updating address", error);
       toast.error(error?.data?.message);
     } finally {
       setIsOpenAddress(false);
     }
   };
 
-  const user = data?.data?.user;
-  useEffect(() => {
-    if (user) {
-      setAddress(user?.address);
-    }
-  }, [user]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <SimpleLoader />
+      </div>
+    );
+  }
 
-  return loading ? (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      {" "}
-      <SimpleLoader />
-    </div>
-  ) : (
-    <div className=" w-full z-20">
+  return (
+    <div className="w-full z-20">
       <div className="pt-4 lg:pt-0">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold">Personal Information</h1>
         </div>
 
         <div className="p-5">
-          <div className="flex items-center justify-center">
-            <div className="relative w-32 h-32 rounded-full">
-              {isLoadingAvatar ? (
+          <div className="flex flex-col items-center justify-center space-y-2">
+            {/* Wrap in group to enable hover */}
+            <div className="relative w-32 h-32 rounded-full group">
+              {isLoadingAvatar || isRemovingAvatar ? (
                 <SimpleLoader />
               ) : (
                 <Image
@@ -139,38 +156,48 @@ const handleUpdateName = async (value) => {
                 />
               )}
 
+              {/* Edit image input & icon remain as is */}
               <div className="absolute bottom-1 right-0 cursor-pointer">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
                   className="absolute inset-0 opacity-0 cursor-pointer"
+                  disabled={isLoadingAvatar || isRemovingAvatar}
                 />
                 <OutlinePencil />
               </div>
+
+              {/* Remove profile image button on hover */}
+              {avatar && avatar !== "/profilepic.jpeg" && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  disabled={isRemovingAvatar || isLoadingAvatar}
+                  className="
+                    absolute top-0 left-0 w-full h-full
+                    bg-black bg-opacity-40 text-white
+                    opacity-0 group-hover:opacity-100
+                    flex items-center justify-center
+                    rounded-full
+                    transition-opacity duration-300
+                    text-sm
+                  "
+                  type="button"
+                  aria-label="Remove profile image"
+                >
+                  {isRemovingAvatar ? "Removing..." : "Remove "}
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="p-4">
-        <PersonalInfo
-          label="Name"
-          content={userName}
-          onClick={() => setIsOpenName(true)}
-        />
-        <PersonalInfo
-          label="Phone number"
-          content={mobileNumber}
-          onClick={() => setIsOpenPhone(true)}
-        />
+        <PersonalInfo label="Name" content={userName} onClick={() => setIsOpenName(true)} />
+        <PersonalInfo label="Phone number" content={mobileNumber} onClick={() => setIsOpenPhone(true)} />
         <PersonalInfo label="Email id" content={email} />
-        <PersonalInfo
-          label="Address"
-          content={address}
-          required={false}
-          onClick={() => setIsOpenAddress(true)}
-        />
+        <PersonalInfo label="Address" content={address} required={false} onClick={() => setIsOpenAddress(true)} />
       </div>
 
       <CustomDialog open={isOpenName} close={() => setIsOpenName(false)}>
@@ -179,9 +206,7 @@ const handleUpdateName = async (value) => {
           label="Name"
           content={name}
           onClick={() => setIsOpenName(false)}
-          onSave={(value) => {
-            handleUpdateName(value);
-          }}
+          onSave={handleUpdateName}
         />
       </CustomDialog>
 
@@ -192,23 +217,18 @@ const handleUpdateName = async (value) => {
           type="text"
           content={phone}
           onClick={() => setIsOpenPhone(false)}
-          onSave={(value) => {
-            handleUpdateMobile(value);
-          }}
+          onSave={handleUpdateMobile}
         />
       </CustomDialog>
 
-      <CustomDialog open={isOpenAddress} close={() => setIsOpenPhone(false)}>
+      <CustomDialog open={isOpenAddress} close={() => setIsOpenAddress(false)}>
         <EditInfo
           isLoading={isLoadingAddress}
           label="Address"
           type="text"
-          
           content={address}
           onClick={() => setIsOpenAddress(false)}
-          onSave={(value) => {
-            handleUpdateAddress(value);
-          }}
+          onSave={handleUpdateAddress}
         />
       </CustomDialog>
     </div>
@@ -220,14 +240,12 @@ const PersonalInfo = ({ label, content, onClick }) => {
     <div className="py-1">
       <label
         htmlFor="name"
-        className="text-[13px] ml-1 text-gray-400 important "
+        className={`text-[13px] ml-1 text-gray-400 ${label !== "Address" ? "important" : ""}`}
       >
         {label}
       </label>
       <div className="flex items-center justify-between relative">
-        <p className="text-sm font-medium border border-gray-500 p-4 w-full rounded-xl ">
-          {content}
-        </p>
+        <p className="text-sm font-medium border border-gray-500 p-4 w-full rounded-xl">{content}</p>
         {label !== "Email id" && (
           <div className="cursor-pointer absolute right-3" onClick={onClick}>
             <YellowPencil />
