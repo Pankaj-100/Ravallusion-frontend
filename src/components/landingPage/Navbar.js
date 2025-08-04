@@ -14,7 +14,7 @@ const Navbar = () => {
       <div className="w-14 h-14 relative">
         <Image src="/logo.png" alt="logo" fill className="object-contain" />
       </div>
-      <span className="text-2xl font-semibold whitespace-nowrap">
+      <span className="lg:text-xl md:text:sm font-semibold whitespace-nowrap">
         Ravallusion Academy
       </span>
     </Link>
