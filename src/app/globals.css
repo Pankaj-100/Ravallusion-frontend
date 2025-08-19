@@ -704,7 +704,13 @@ button:disabled {
   cursor: not-allowed !important;
 }
 
-
+.custom-scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+.custom-scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
+}
 
 /* Verify certifcate scrollbar hide */
 .verify-certificate,.paypal-button::-webkit-scrollbar {

@@ -36,6 +36,7 @@ export default function Home() {
 
   return loading ? (
     <PageLoader />
+    // <></>
   ) : (
     <div>
       <HeroSection data={heroSection?.data?.heroSection} />

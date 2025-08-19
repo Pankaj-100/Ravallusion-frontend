@@ -49,7 +49,7 @@ const UpgradePlan = () => {
             </div>
 
             <div className=' bg-[var(--Surface)] backdrop-blur-lg border border-[var(--neon-purple)] px-5 py-2 rounded-lg flex items-center justify-center'>
-                <Link href={'/subscription-plan'} className='text-sm md:text-lg font-medium'>Upgrade</Link>
+                <Link href={'/Upgrade-plan'} className='text-sm md:text-lg font-medium'>Upgrade</Link>
             </div>
 
         </div >

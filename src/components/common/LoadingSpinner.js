@@ -21,7 +21,7 @@ const LoadingSpinner = ({ className = '' }) => {
         /> */}
         
         {/* Inner spinning elements */}
-        <g className="origin-center">
+        {/* <g className="origin-center">
           {[...Array(6)].map((_, i) => (
             <rect
               key={i}
@@ -38,16 +38,16 @@ const LoadingSpinner = ({ className = '' }) => {
               }}
             />
           ))}
-        </g>
+        </g> */}
 
         {/* Center dot */}
-        <circle
+        {/* <circle
           cx="25"
           cy="25"
           r="3"
           fill="currentColor"
           className="animate-pulse"
-        />
+        /> */}
       </svg>
 
       <style jsx>{`
@@ -64,7 +64,7 @@ const LoadingSpinner = ({ className = '' }) => {
 export const SimpleLoader = () => {
   return (
     <div className="flex justify-center items-center w-full h-full">
-      <div className="w-12 h-12 border-4 border-[var(--neon-purple)] border-t-black rounded-full animate-spin"></div>
+      {/* <div className="w-12 h-12 border-4 border-[var(--neon-purple)] border-t-black rounded-full animate-spin"></div> */}
     </div>
   );
 };

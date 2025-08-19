@@ -26,6 +26,7 @@ const VideoDashboard = () => {
   const chapterRef = useRef(null);
   const dispatch = useDispatch();
   const router = useRouter();
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const videoId = searchParams.get("videoId");
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
@@ -143,11 +144,24 @@ useEffect(() => {
     }
 
   }, [courseProgress, data]);
+
+  useEffect(() => {
+    const foundVideo = courseProgress?.data?.courseProgress?.find(
+      (v) => v.video === videoId
+    );
+  
+      if (foundVideo?.isCompleted !== undefined) {
+    setIsCompleted(foundVideo.isCompleted);
+  }
+   
+ 
+    
+  }, [courseProgress, videoId]); 
     // Force video player to remount when videoUrl changes
   const videoPlayerKey = videoUrl || "no-video";
   return (
-    <div className="lg:mt-6 flex lg:flex-row flex-col">
-      <div className="lg:mr-6 xl:mr-8 w-full lg:w-[70%]">
+    <div className="lg:mt-2 flex lg:flex-row flex-col">
+      <div className="lg:mr-1 xl:mr-1 w-full lg:w-[70%]">
         <div className="h-[400px] rounded-md">
           {isLoading || courseProgressLoading ? (
             <SimpleLoader />
@@ -165,7 +179,7 @@ useEffect(() => {
               chapterRef={chapterRef}
               chapters={data?.data?.timestamps}
               iscourse={status}
-                // setVideoPlaying={setVideoPlaying}
+               setIsCompleted={setIsCompleted}
             />
           ) : !delayedAccessMessage ? (
             <SimpleLoader />
@@ -206,6 +220,7 @@ useEffect(() => {
             title={data?.data?.video?.title}
             description={data?.data?.video?.description}
             chapters={data?.data?.timestamps}
+             isCompleted={isCompleted} 
           />
         </div>
 

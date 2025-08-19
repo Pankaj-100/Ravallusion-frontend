@@ -102,6 +102,10 @@ const typecourse = path.includes("beginner") ? "beginner" : "advanced";
       const beginnerModules = (beginnerCourse?.modules || []).map((mod) => ({ ...mod, level: 1 }));
       const advancedModules = (advanceCourse?.modules || []).map((mod) => ({ ...mod, level: 2 }));
 
+
+console.log("advancedModules photshop",advancedModules[0]?.submodules?.[0]?.videos?.[0]?._id);
+console.log("advancedModules premium pro",advancedModules[1]?.submodules?.[0]?.videos?.[0]?._id);
+
       const allModules = [...beginnerModules, ...advancedModules];
       const mergedModules = mergeModulesByTitle(allModules);
 
@@ -127,23 +131,43 @@ dispatch(setCourse(mergedCourse));
 
 
 if(tooltype==null){
+ 
       const firstVideoId = mergedModules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
       if (firstVideoId) {
         dispatch(setFirstVideoId(firstVideoId));
       }
     }
+
+
     if(tooltype=="photoshop"  ){
+      if(typecourse=="beginner"){
         const firstVideoId = mergedModules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
       if (firstVideoId) {
         dispatch(setFirstVideoId(firstVideoId));
       }
+    }
+           if(typecourse=="advanced"){
+        const firstVideoId = advancedModules[0]?.submodules?.[0]?.videos?.[0]?._id;
+      if (firstVideoId) {
+        dispatch(setFirstVideoId(firstVideoId));
+      }
+    
 
     }
+  }
        if(tooltype=="premier-pro"  ){
+        if(typecourse=="beginner"){
         const firstVideoId = mergedModules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
       if (firstVideoId) {
         dispatch(setFirstVideoId(firstVideoId));
       }
+    }
+         if(typecourse=="advanced"){
+        const firstVideoId = advancedModules[1]?.submodules?.[0]?.videos?.[0]?._id;
+      if (firstVideoId) {
+        dispatch(setFirstVideoId(firstVideoId));
+      }
+    }
 
     }
 
@@ -181,7 +205,7 @@ if(tooltype==null){
         />
       </div>
 
-      <div className="py-4 min-h-screen bg-[#181F2B] rounded-2xl">
+      <div className="py-4 bg-[#181F2B] rounded-2xl h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar-hide">
         {activeIndex === 0 && (
           <>
           <CourseModuleList

@@ -31,11 +31,11 @@ const CourseCard = ({ course }) => {
         <div className="flex flex-col gap-2 2xl:gap-4 h-auto">
           <div>
             <div className="h-auto">
-              <h3 className="text-lg xl:text-xl font-medium leading-tight line-clamp-2">{title}</h3>
+              <h3 className="text-lg xl:text-xl font-medium leading-tight ">{title}</h3>
             </div>
 
             <div className="mt-2">
-              <p className="text-gray-400 text-xs 2xl:text-base line-clamp-2">{description}</p>
+              <p className="text-gray-400 text-xs 2xl:text-base ">{description}</p>
             </div>
           </div>
 

@@ -33,8 +33,12 @@ const VideoDescription = ({
   downloadAssignment,
   showTimeStamp,
   chapterRef,
+  isCompleted,
+  
   chapters,
 }) => {
+
+
   const chapterSection = useRef(null);
   const [addToBookmark] = useAddBookmarkMutation();
   const { data: getdata, refetch } = useGetBookmarkQuery();
@@ -162,7 +166,7 @@ const VideoDescription = ({
   if (!isClient) return null;
 
   return (
-    <div className="text-white">
+    <div className="text-white ms-6">
       <div className="flex justify-between mb-3">
         <h1 className="text-xl font-semibold">{title}</h1>
         {title && !isBookmarked && (
@@ -210,12 +214,17 @@ const VideoDescription = ({
         </div>
       )}
 
-      <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center flex-wrap">
-        <TextIconBox
-          title="Submit assignment"
-          icon={<Assignment />}
-          onClick={() => setIsAssignmentOpen(true)}
-        />
+      <div className="flex mx-10 gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center flex-wrap">
+   <TextIconBox
+  title="Submit assignment"
+  icon={<Assignment />}
+  onClick={() => {
+    if (isCompleted) {
+      setIsAssignmentOpen(true);
+    }
+  }}
+  disabled={!isCompleted}
+/>
         <TextIconBox
           title="Download assets"
           icon={<DownloadIcon />}
@@ -241,10 +250,14 @@ const VideoDescription = ({
   );
 };
 
-const TextIconBox = ({ title, icon, onClick }) => (
+const TextIconBox = ({ title, icon, onClick, disabled }) => (
   <div
-    onClick={onClick}
-    className="bg-[#2C68F626] cursor-pointer flex-1 flex items-center justify-center gap-x-4 rounded-[8px] px-5 py-2 h-12 w-full md:w-auto border border-[var(--neon-purple)]"
+    onClick={!disabled ? onClick : undefined}
+    className={`bg-[#2C68F626] flex-1  flex items-center justify-center gap-x-4 rounded-[8px] px-5 py-2 h-12 w-full md:w-auto border border-[var(--neon-purple)] ${
+      disabled
+        ? "cursor-not-allowed opacity-50"
+        : "cursor-pointer hover:bg-[#2C68F640]"
+    }`}
   >
     <h1 className="text-xs font-semibold">{title}</h1>
     {icon}

@@ -61,6 +61,7 @@ const VideoPlayer = ({
   iscourse,
   chapterRef,
   chapters,
+  setIsCompleted
     // setVideoPlaying,
 }) => {
 
@@ -426,6 +427,7 @@ const handleEnded = async () => {
   setPlaying(false);
   setShowRestartButton(true);
   setIsVideoCompleted(true);
+  setIsCompleted(true);
 // setVideoPlaying(false)  
 
   

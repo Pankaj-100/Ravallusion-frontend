@@ -1,3 +1,4 @@
+"use client";
 import { mapToObject, objectToMap } from "@/lib/functions";
 import { Bookmarked, Lock, OrangePlay } from "@/lib/svg_icons";
 import { useDeleteBookmarkMutation } from "@/store/Api/introAndBookmark";
@@ -258,9 +259,9 @@ const fetchVideo = () => {
       </div>
 
       <div className="flex-grow w-32">
-        <h1 className="text-xs font-normal mb-1 truncate whitespace-nowrap">
+        <h1 className="text-md font-normal mb-1 ">
           {isplaying ? (
-            <span className="text-sm font-medium text-[var(--yellow)]">Opening file</span>
+            <span className="text-md font-normal text-[var(--yellow)]">Opening file</span>
           ) : (
             title
           )}

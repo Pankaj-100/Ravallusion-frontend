@@ -1,5 +1,6 @@
+"use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CrossIcon, MinusIcon } from "@/lib/svg_icons";
 import { LessonCard } from "./IntroductoryAndBookmarkList";
   import { useDispatch } from 'react-redux';
@@ -28,19 +29,47 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
   const { data: progressData } = useGetCourseProgressQuery();
   const planName = progressData?.data?.planName;
   const heading = "Courses";
-  
+
+  // Find the module and submodule containing the playingVideoId
+  let expandedModuleIdx = null;
+  let expandedSubmoduleId = null;
+  let lessonRefMap = {}; // <--- Add this
+  if (playingVideoId && modules) {
+    modules.forEach((module, mi) => {
+      module.submodules?.forEach((sub) => {
+        sub.videos?.forEach((v) => {
+          if (v._id === playingVideoId) {
+            expandedModuleIdx = mi;
+            expandedSubmoduleId = sub._id;
+          }
+        });
+      });
+    });
+  }
+
+  // --- Add refs for each lesson ---
+  const lessonRefs = useRef({});
+
+  // --- Scroll to the correct lesson when playingVideoId changes ---
+  useEffect(() => {
+    if (playingVideoId && lessonRefs.current[playingVideoId]) {
+      lessonRefs.current[playingVideoId].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [playingVideoId]);
 
   return (
     <>
       <h1 className='text-lg font-semibold mb-7 px-3'>{heading}</h1>
-
       <div className='flex flex-col gap-y-7'>
         {isLoading ? (
           <CourseSkeletonLoader />
         ) : modules && modules.length > 0 ? (
           modules.map((module, i) => (
             <CourseCard
-              key={i}
+              key={module._id + (i === expandedModuleIdx ? '-expanded' : '')}
               title={module.name}
               img={module.thumbnailUrl}
               videoCount={countVideosInModule(module)}
@@ -49,20 +78,15 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
               setPlayingVideoId={setPlayingVideoId}
               course={course}
               planName={planName}
+              autoExpand={i === expandedModuleIdx || (!playingVideoId && i === 0)}
+              autoExpandSubmoduleId={expandedSubmoduleId}
+              lessonRefs={lessonRefs}
             />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center gap-y-4 h-40 px-5 text-center rounded-xl shadow-lg">
             <span className="animate-pulse text-4xl">😢</span>
             <h3 className="text-lg font-semibold text-red-500">Plan not Found</h3>
-            {/* <p className="text-sm text-gray-400">
-              You don&apos;t have access to this course. Please purchase a valid plan to continue.
-            </p>
-            <Link href="/subscription-plan">
-              <CustomButton className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-600 hover:to-blue-400 px-5 py-2 rounded-lg text-white font-semibold">
-                Buy a Plan
-              </CustomButton>
-            </Link> */}
           </div>
         )}
       </div>
@@ -70,12 +94,19 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
   );
 };
 
-const CourseCard = ({ title, img, videoCount, submodules, playingVideoId, setPlayingVideoId, course, planName }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+// Update CourseCard and CourseCardExpand to accept and pass lessonRefs
 
-  const handleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
+const CourseCard = ({
+  title, img, videoCount, submodules, playingVideoId, setPlayingVideoId, course, planName,
+  autoExpand = false, autoExpandSubmoduleId = null, lessonRefs
+}) => {
+  const [isExpanded, setIsExpanded] = useState(autoExpand);
+
+  useEffect(() => {
+    setIsExpanded(autoExpand);
+  }, [autoExpand]);
+
+  const handleExpand = () => setIsExpanded(!isExpanded);
 
   return (
     <>
@@ -96,15 +127,15 @@ const CourseCard = ({ title, img, videoCount, submodules, playingVideoId, setPla
                 background: "rgba(0, 0, 0, 0.50)",
                 backdropFilter: "blur(5.4px)",
               }}
-              className="px-1 py-[2px] text-[10px] absolute top-2 right-2 rounded-sm"
+              className="px-1 py-[2px] text-md absolute top-2 right-2 rounded-sm"
             >
               {videoCount} videos
             </span>
           </div>
 
           <div className="flex-grow w-32">
-            <h1 className="text-xs font-normal mb-1">{title}</h1>
-            <p className="text-[10px] truncate whitespace-nowrap">
+            <h1 className="text-md font-normal mb-1">{title}</h1>
+            <p className="text-md truncate whitespace-nowrap">
               {videoCount} videos
             </p>
           </div>
@@ -120,6 +151,8 @@ const CourseCard = ({ title, img, videoCount, submodules, playingVideoId, setPla
           setPlayingVideoId={setPlayingVideoId}
           course={course}
           planName={planName}
+          autoExpandSubmoduleId={autoExpandSubmoduleId}
+          lessonRefs={lessonRefs}
         />
       )}
     </>
@@ -136,17 +169,67 @@ const CourseCardExpand = ({
   playingVideoId,
   course,
   planName,
+  autoExpandSubmoduleId = null,
+  lessonRefs // <--- Accept lessonRefs as prop, do NOT redeclare below!
 }) => {
   const params = useSearchParams();
-    // const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const videoId = params.get("videoId");
   const [dropdownStates, setDropdownStates] = useState({});
+
+  // Auto-expand the submodule containing the playing video
+  useEffect(() => {
+    if (autoExpandSubmoduleId) {
+      setDropdownStates((prev) => ({
+        ...prev,
+        [autoExpandSubmoduleId]: true,
+      }));
+    }
+  }, [autoExpandSubmoduleId]);
+
+  useEffect(() => {
+    // Scroll only if the lesson card is in the DOM
+    if (
+      playingVideoId &&
+      lessonRefs.current[playingVideoId] &&
+      dropdownStates[autoExpandSubmoduleId]
+    ) {
+      setTimeout(() => {
+        lessonRefs.current[playingVideoId]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [playingVideoId, dropdownStates, autoExpandSubmoduleId, lessonRefs]);
 
   useEffect(() => {
     if (videoId) {
       setPlayingVideoId(videoId);
     }
   }, [videoId]);
+
+  useEffect(() => {
+    // Scroll to the lesson card if playingVideoId is present
+    if (playingVideoId && lessonRefs.current[playingVideoId]) {
+      lessonRefs.current[playingVideoId].scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [playingVideoId]);
+
+  useEffect(() => {
+    if (
+      playingVideoId &&
+      lessonRefs.current[playingVideoId] &&
+      Object.values(dropdownStates).some(Boolean)
+    ) {
+      setTimeout(() => {
+        lessonRefs.current[playingVideoId]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [playingVideoId, dropdownStates, lessonRefs]);
 
   const toggleDropdown = (index) => {
     setDropdownStates((prevState) => ({
@@ -174,8 +257,8 @@ const CourseCardExpand = ({
         </div>
 
         <div className="flex-grow">
-          <h1 className="text-xs font-semibold mb-1">{title}</h1>
-          <p className="text-xs">{videoCount} videos</p>
+          <h1 className="text-md font-semibold mb-1">{title}</h1>
+          <p className="text-md">{videoCount} videos</p>
         </div>
 
         <button onClick={onCollapse} className="ml-auto">
@@ -204,13 +287,13 @@ const CourseCardExpand = ({
                 </div>
 
                 <div className="flex-grow w-32">
-                  <h1 className="text-xs font-semibold mb-1 flex items-center gap-1 z-1000">
+                  <h1 className="text-md font-semibold mb-1 flex items-center gap-1 z-1000">
                     {submodule.name}
                     {submodule.planLevel === 2 && (
                      <PremiumIcon size={20}/>
                     )}
                   </h1>
-                  <p className="text-xs text-gray-300 ">{getSubmoduleVideoCount(submodule)} videos</p>
+                  <p className="text-md text-gray-300 ">{getSubmoduleVideoCount(submodule)} videos</p>
                 </div>
 
                 <button onClick={() => toggleDropdown(submodule._id)} className="text-xs text-red-500 underline ml-auto">
@@ -246,7 +329,7 @@ const CourseCardExpand = ({
                 </div>
 
                 <div className="flex-grow w-32">
-                  <h1 className="text-xs font-normal mb-1 flex items-center gap-1">
+                  <h1 className="text-md font-normal mb-1 flex items-center gap-1">
                     {submodule.name}
                
                   </h1>
@@ -272,7 +355,13 @@ const CourseCardExpand = ({
 
    
       return (
-        <div key={j} className="relative">
+        <div
+          key={j}
+          className="relative"
+          ref={el => {
+            if (lesson._id && lessonRefs) lessonRefs.current[lesson._id] = el;
+          }}
+        >
           {lesson.planLevel === 2 && (
             <div className="relative top-2 left-2 z-1000">
               <PremiumIcon className="w-5 h-5" />

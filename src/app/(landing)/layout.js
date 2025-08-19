@@ -23,6 +23,7 @@ export default function LandingLayout({ children }) {
           // dispatch(setIsIndia(false));
         }
       } catch (error) {
+      
         console.error("Error fetching country:", error);
       }
     };

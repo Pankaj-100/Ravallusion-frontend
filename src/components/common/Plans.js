@@ -145,7 +145,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
 
         <div className="!w-[70vw]  sm:!w-[296px] 2xl:!w-[22rem] !h-[450px] 2xl:!h-[31rem] bg-[#131A26] rounded-2xl  py-[30px] 2xl:py-4 flex flex-col plans-card">
           <h1 className="text-lg 2xl:text-xl uppercase pb-[30px] px-4 font-semibold border-b-[1px] 2xl:px-5 border-gray-500 bg-gradient-to-l from-[#C99BFD]/80 to-[var(--neon-purple)] bg-clip-text text-transparent 2xl:pb-9">
-            {plans[1].plan_type}
+            {plans[1]?.plan_type}
           </h1>
           <div className="py-[30px] px-4 flex flex-col 2xl:px-6 2xl:py-9 2xl:gap-6  gap-4 items-start">
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
