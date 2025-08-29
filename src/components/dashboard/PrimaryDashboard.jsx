@@ -1,124 +1,112 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import fireEffectimg from "../../../public/fire-effect.jpeg";
-import spaceEffect1 from "../../../public/space-effect.png";
-import prismatic from "../../../public/prismatic.png";
+import React from "react";
+// import fireEffectimg from "../../../public/fire-effect.jpeg";
+// import prismatic from "../../../public/prismatic.png";
 import Image from "next/image";
 import { useGetCarouselImgQuery } from "@/store/Api/primaryDashboard";
 import { motion } from "framer-motion";
 import CarouselWrapper from "../common/CarouselWrapper";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setSidebarTabIndex } from  "@/store/slice/general";
+import { setSidebarTabIndex } from "@/store/slice/general";
+
+// Simple skeleton component
+const SkeletonBox = ({ className = "" }) => (
+  <div className={`animate-pulse bg-gray-700/60 ${className}`} />
+);
+
 const PrimaryDashboard = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const { data } = useGetCarouselImgQuery();
-  const router = useRouter(); 
- const dispatch = useDispatch();
+  const { data, isLoading } = useGetCarouselImgQuery();
+  const router = useRouter();
+  const dispatch = useDispatch();
 
- console.log(data)
-  const defaultImages = [
-    { img: fireEffectimg, videoId: null },
-    { img: spaceEffect1, videoId: null },
-    { img: prismatic, videoId: null },
-  ];
-
+  // Extract carousel and side images from backend data
   const carousals = data?.data?.carousals || [];
-  const carouselItems = carousals?.length
+  const sideImages = data?.data?.sideImages || {};
+
+  const carouselItems = carousals.length
     ? carousals.map((item) => ({
         img: item?.video?.thumbnailUrl,
         videoId: item?.video?._id,
       }))
     : [];
-  
-
-  useEffect(() => {
-    if (carouselItems?.length === 0) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % carouselItems?.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [carouselItems?.length]);
 
   const handleClick = (videoId) => {
-     dispatch(setSidebarTabIndex(1));
+    dispatch(setSidebarTabIndex(1));
     if (videoId) {
       router.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
     }
   };
 
+  // Only show images if loaded from API
+  const leftImage = sideImages?.dashboardLeftImage;
+  const rightImage = sideImages?.dashboardRightImage;
+
+  // Show skeletons while loading or missing data
+  if (isLoading || !leftImage || !rightImage || carouselItems.length === 0) {
+    return (
+      <div className="w-full flex flex-row items-center justify-center h-[500px] md:h-[400px] bg-gradient-to-r from-[#181c2a] via-[#23263a] to-[#181c2a] rounded-2xl shadow-xl">
+        {/* Left Skeleton */}
+        <SkeletonBox className="w-[30%] h-[100%] rounded-l-2xl" />
+        {/* Center Skeleton */}
+        <SkeletonBox className="w-[40%] h-[100%] mx-2 rounded-xl" />
+        {/* Right Skeleton */}
+        <SkeletonBox className="w-[30%] h-[100%] rounded-r-2xl" />
+      </div>
+    );
+  }
+
   return (
-    <CarouselWrapper>
-      {carouselItems.map((item, index) => (
-        <div key={index} className="grid grid-cols-12 gap-0 lg:gap-2 h-96 lg:h-80">
-          <motion.div
-            whileHover={{ scale: 0.95 }}
-            className="bg-pink-200 lg:col-span-3 col-span-6 relative order-1 lg:order-0 cursor-pointer"
-            onClick={() =>
-              handleClick(carouselItems[currentIndex % carouselItems?.length]?.videoId)
-            }
-          >
-            <Image
-              src={carouselItems[currentIndex % carouselItems?.length]?.img || fireEffectimg}
-              alt="Fire effect img"
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          </motion.div>
+    <div className="w-full flex flex-row items-center justify-center h-[500px] md:h-[400px] bg-gradient-to-r from-[#181c2a] via-[#23263a] to-[#181c2a] rounded-2xl shadow-xl">
+      {/* Left Side Image */}
+      <div className="w-[30%] h-full relative rounded-l-2xl overflow-hidden transition-all duration-500">
+        <Image
+          src={leftImage}
+          alt="Dashboard Left"
+          fill
+          style={{ objectFit: "cover" }}
+          className="rounded-l-2xl scale-105 hover:scale-110 transition-transform duration-700"
+          priority
+        />
+      </div>
 
-          <div
-            className="col-span-12 lg:col-span-6 relative flex items-center justify-center order-0 lg:order-1 cursor-pointer"
-            onClick={() =>
-              handleClick(carouselItems[(currentIndex + 1) % carouselItems?.length]?.videoId)
-            }
-          >
-            <div className="w-full h-full relative overflow-hidden">
-              <Image
-                src={carouselItems[(currentIndex + 1) % carouselItems?.length]?.img || spaceEffect1}
-                alt={`Space effect image ${currentIndex + 1}`}
-                fill
-                style={{
-                  objectFit: "cover",
-                  transition: "opacity 1s ease-in-out",
-                }}
-              />
-            </div>
-
-            <div className="absolute bottom-3 flex justify-center w-full gap-1 z-10">
-              {carouselItems.map((_, dotIndex) => (
-                <div
-                  key={dotIndex}
-                  className={`w-[6px] h-[6px] rounded-full ${
-                    currentIndex === dotIndex
-                      ? "bg-[var(--neon-purple)]"
-                      : "bg-gray-500"
-                  }`}
+      {/* Center Carousel */}
+      <div className="w-[40%] h-full flex flex-col items-center justify-center">
+        <div className="w-full h-full bg-black/80 rounded-none flex items-center justify-center relative overflow-hidden shadow-2xl">
+          <CarouselWrapper navigation={false} showDots={true}>
+            {carouselItems.map((item, idx) => (
+              <motion.div
+                key={item.videoId || idx}
+                whileHover={{ scale: 0.99 }}
+                className="relative w-full h-full cursor-pointer overflow-hidden flex items-center justify-center"
+                onClick={() => handleClick(item.videoId)}
+              >
+                <Image
+                  src={item.img}
+                  alt="Carousel Video"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  className="transition-transform duration-700"
+                  priority
                 />
-              ))}
-            </div>
-          </div>
-
-          <motion.div
-            whileHover={{ scale: 0.95 }}
-            className="bg-blue-200 col-span-6 lg:col-span-3 relative order-2 cursor-pointer"
-            onClick={() =>
-              handleClick(carouselItems[(currentIndex + 2) % carouselItems?.length]?.videoId)
-            }
-          >
-            <Image
-              src={carouselItems[(currentIndex + 2) % carouselItems?.length]?.img || prismatic}
-              alt="Prismatic img"
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          </motion.div>
+              </motion.div>
+            ))}
+          </CarouselWrapper>
         </div>
-      ))}
-      
-    </CarouselWrapper>
+      </div>
 
+      {/* Right Side Image */}
+      <div className="w-[30%] h-full relative rounded-r-2xl overflow-hidden transition-all duration-500">
+        <Image
+          src={rightImage}
+          alt="Dashboard Right"
+          fill
+          style={{ objectFit: "cover" }}
+          className="rounded-r-2xl scale-105 hover:scale-110 transition-transform duration-700"
+          priority
+        />
+      </div>
+    </div>
   );
 };
 

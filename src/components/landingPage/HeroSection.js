@@ -16,7 +16,7 @@ console.log(data.caption)
     setIsMobile(mobileWidth);
   }, []);
   return (
-    <LandingContainer className=" relative w-full !h-screen flex items-center md:px-[7rem] 2xl:px-[10rem]">
+    <LandingContainer className=" relative w-full !h-screen flex items-center md:px-[7rem] 2xl:px-[10rem] mt-2">
       {/* Text Content */}
       <div className="mt-[10rem] sm:mt-0 relative z-10 max-w-[800px] flex flex-col items-start text-left gap-2 md:gap-4">
         <h1 className="text-[37px] md:text-5xl 2xl:text-6xl leading-tight">
@@ -47,7 +47,7 @@ console.log(data.caption)
             src="/hero-image.png"
             fill
             alt="Hero Background"
-            style={{ objectFit: "cover" }}
+            // style={{ objectFit: "cover" }}
           />
         )}
       </div>

@@ -2,7 +2,7 @@ import { fetchBaseQuery, createApi } from '@reduxjs/toolkit/query/react';
 
 export const primaryDashboardApi = createApi({
     reducerPath: "primaryDashboardApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "/api/v1/" }),
+    baseQuery: fetchBaseQuery({ baseUrl: "/api/v1" }),
     endpoints: (builder) => ({
         getCarouselImg: builder.query({
             query: () => `dashboard/carousal`

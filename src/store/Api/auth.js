@@ -5,7 +5,7 @@ export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api/v1/" }),
 
-  tagTypes: ["user"],
+  tagTypes: ["user","invoiceProfile"],
   endpoints: (builder) => ({
     signin: builder.mutation({
       query: (body) => ({
@@ -94,6 +94,22 @@ export const authApi = createApi({
     getActivePaymentGateway: builder.query({
       query: () => "app-config/active-gateways",
     }),
+//invoice profile
+     getInvoiceProfile: builder.query({
+      query: () => "user/invoice-profile",
+      providesTags: ["invoiceProfile"],
+    }),
+
+    updateInvoiceProfile: builder.mutation({
+      query: (body) => ({
+        url: "user/invoice-profile",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["invoiceProfile"],
+    }),
+
+
   }),
 });
 
@@ -112,4 +128,6 @@ export const {
   useGetActivePaymentGatewayQuery,
   useUpdateAddressMutation,
   useRemoveAvatarMutation,
+  useGetInvoiceProfileQuery,
+  useUpdateInvoiceProfileMutation,
 } = authApi;

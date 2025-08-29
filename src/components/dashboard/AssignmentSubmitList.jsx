@@ -147,7 +147,7 @@ const SubmitAssignmentCard = ({ isCompleted, percentageWatched, videoId, score, 
                     ) : isCompleted && hasSubmitted ? (
                         <div className='py-2 px-3 w-20 rounded-lg text-center' style={{ background: "linear-gradient(0deg, rgba(163, 127, 255, 0.25) 0%, rgba(163, 127, 255, 0.25) 100%), #030A14" }}>
                             <p className='text-[6px]'>Score</p>
-                            <h1 className='text-sm font-bold' style={{ color: "var(--neon-purple, linear-gradient(180deg, #C99BFD 0%, #8574F6 100%))" }}>{score || "75%"}</h1>
+                            <h1 className='text-sm font-bold' style={{ color: "var(--neon-purple, linear-gradient(180deg, #C99BFD 0%, #8574F6 100%))" }}>{score || "_"}</h1>
                         </div>
 
                     ) : (

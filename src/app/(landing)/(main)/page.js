@@ -42,8 +42,9 @@ export default function Home() {
       <HeroSection data={heroSection?.data?.heroSection} />
       <MainCarousel data={carouselSection?.data?.carousals} />
       <TutorialsSection data={latestTutorialSection?.data?.tutorials} />
-      <ModuleSection modules={moduleSection?.data?.modules} curriculum={curriculumSection?.data?.curriculum} />
       <PlansSection plans={planSection?.data?.plans} />
+      <ModuleSection modules={moduleSection?.data?.modules} curriculum={curriculumSection?.data?.curriculum} />
+      
       <MentorsSection mentor={mentorSection?.data?.mentor} />
       <CertificateSection certificate={certificateSection?.data?.certificate} />
       <FAQSection faqs={faqSection?.data?.faqs} />
