@@ -130,6 +130,7 @@ const VideoDashboard = () => {
       dispatch(setVideoTitle(data?.data?.video?.title));
     }
   }, [courseProgress, data]);
+  
 
   useEffect(() => {
     setIsCompleted(false);
@@ -227,6 +228,7 @@ const VideoDashboard = () => {
     chapters={data?.data?.timestamps}
     iscourse={status}
     isCompleted={isCompleted}
+     setIsCompleted={setIsCompleted}
   />
 ) : (
   <></>
@@ -245,6 +247,7 @@ const VideoDashboard = () => {
             description={data?.data?.video?.description}
             chapters={data?.data?.timestamps}
             isCompleted={isCompleted}
+             setIsCompleted={setIsCompleted}
           />
         </div>
       </div>

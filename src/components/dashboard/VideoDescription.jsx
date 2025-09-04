@@ -219,8 +219,8 @@ const VideoDescription = ({
   title="Submit assignment"
   icon={<Assignment />}
   onClick={() => {
-    if (!isCompleted) {
-      setIsAssignmentOpen(false);
+    if (isCompleted) {
+      setIsAssignmentOpen(true);
     }
   
   }}
