@@ -28,14 +28,29 @@ const PrimaryDashboard = () => {
     ? carousals.map((item) => ({
         img: item?.video?.thumbnailUrl,
         videoId: item?.video?._id,
+        level :item?.video?.level
       }))
     : [];
 
-  const handleClick = (videoId) => {
-    dispatch(setSidebarTabIndex(1));
+  const handleClick = (videoId,level) => {
+    if(level==1){
+    dispatch(setSidebarTabIndex(0));
     if (videoId) {
       router.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
     }
+  }
+     else if(level==2){
+    dispatch(setSidebarTabIndex(0));
+    if (videoId) {
+      router.push(`/dashboard/player-dashboard/advance?videoId=${videoId}`);
+    }
+  }
+  else {
+    dispatch(setSidebarTabIndex(1));
+    if (videoId) {
+      router.push(`/dashboard/player-dashboard/learn-properly?videoId=${videoId}`);
+    }
+  }
   };
 
   // Only show images if loaded from API
@@ -47,11 +62,11 @@ const PrimaryDashboard = () => {
     return (
       <div className="w-full flex flex-row items-center justify-center h-[500px] md:h-[400px] bg-gradient-to-r from-[#181c2a] via-[#23263a] to-[#181c2a] rounded-2xl shadow-xl">
         {/* Left Skeleton */}
-        <SkeletonBox className="w-[30%] h-[100%] rounded-l-2xl" />
+        <SkeletonBox className="w-[25%] h-[100%] rounded-l-2xl" />
         {/* Center Skeleton */}
-        <SkeletonBox className="w-[40%] h-[100%] mx-2 rounded-xl" />
+        <SkeletonBox className="w-[50%] h-[100%] mx-2 rounded-xl" />
         {/* Right Skeleton */}
-        <SkeletonBox className="w-[30%] h-[100%] rounded-r-2xl" />
+        <SkeletonBox className="w-[25%] h-[100%] rounded-r-2xl" />
       </div>
     );
   }
@@ -79,7 +94,7 @@ const PrimaryDashboard = () => {
                 key={item.videoId || idx}
                 whileHover={{ scale: 0.99 }}
                 className="relative w-full h-full cursor-pointer overflow-hidden flex items-center justify-center"
-                onClick={() => handleClick(item.videoId)}
+                onClick={() => handleClick(item.videoId,item.level)}
               >
                 <Image
                   src={item.img}

@@ -111,8 +111,8 @@ const DashboardNavbar = () => {
             )}
             {urlpath === "playerDashboard" && (
               <>
-                <h1 className="text-lg font-semibold mb-1">Opening file</h1>
-                <p className="text-xs text-[#CDCED1]">{videoTitle}</p>
+                {/* <h1 className="text-lg font-semibold mb-1">Opening file</h1> */}
+                <p className="text-lg font-bold text-[#CDCED1]">{videoTitle}</p>
               </>
             )}
 
@@ -155,7 +155,7 @@ const DashboardNavbar = () => {
           <BoxComponent
             show={show}
             icon={<CrownIcon />}
-            title={"Advanced"}
+            title={" VFX "}
             title1={"Photoshop"}
             title2={"Premier pro"}
             href={"/dashboard/player-dashboard/advanced"}
@@ -164,7 +164,7 @@ const DashboardNavbar = () => {
           <BoxComponent
             show={show}
             icon={<Gear />}
-            title={"Beginner"}
+            title={"Editorial"}
             title1={"Photoshop"}
             title2={"Premier pro"}
             href={"/dashboard/player-dashboard/beginner"}
@@ -259,7 +259,7 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
             href={"/dashboard/player-dashboard/advanced"}
             show={show}
             icon={<CrownIcon />}
-            title={"Advanced"}
+            title={"VFX"}
             title1={"Photoshop"}
             title2={"Premier pro"}
           />
@@ -268,7 +268,7 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
             href={"/dashboard/player-dashboard/beginner"}
             show={show}
             icon={<Gear />}
-            title={"Beginner"}
+            title={"EDITORIAL"}
             title1={"Photoshop"}
             title2={"Premier pro"}
           />
@@ -365,7 +365,7 @@ const BoxComponent = ({
     <div className="relative hidden lg:block" ref={boxRef}>
       <div
         onClick={handleClick}
-        className={`xl:px-4 lg:px-2 py-3 flex flex-col bg-[#040C19] border-x border-t ${
+        className={`xl:px-7 lg:px-4 py-3 flex flex-col bg-[#040C19] border-x border-t ${
           isOpenBoxDropdown ? "" : "border-b"
         } border-[var(--neon-purple)] cursor-pointer relative`}
       >
@@ -424,7 +424,7 @@ const BoxDropdown = ({ title1, title2, href, setIsOpenBoxDropdown }) => {
       <div className="flex flex-col gap-y-1">
         <span
                 onClick={() => handleClick(title1)}
-          className="block px-4 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
+          className="block px-3 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
         >
           {title1}
         </span>

@@ -1,39 +1,41 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
-import { CrossIcon, MinusIcon } from "@/lib/svg_icons";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { CrossIcon, MinusIcon, PremiumIcon } from "@/lib/svg_icons";
 import { LessonCard } from "./IntroductoryAndBookmarkList";
-  import { useDispatch } from 'react-redux';
-
-import { motion } from 'framer-motion';
-import Link from "next/link";
-import { CustomButton } from "../common/CustomButton";
+import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import CourseSkeletonLoader from "./CourseSkeletonLoader";
 import { useGetCourseProgressQuery } from "@/store/Api/courseProgress";
-import {
-  PremiumIcon
-} from "@/lib/svg_icons";
 
-const countVideosInSubmodule = (submodule) => {
-  return submodule?.videos?.length || 0;
-};
+const countVideosInSubmodule = (submodule) =>
+  submodule?.videos?.length || 0;
 
 const countVideosInModule = (module) => {
   if (!module?.submodules) return 0;
-  return module.submodules.reduce((acc, sub) => acc + countVideosInSubmodule(sub), 0);
+  return module.submodules.reduce(
+    (acc, sub) => acc + countVideosInSubmodule(sub),
+    0
+  );
 };
 
-const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading }) => {
+const CourseModuleList = ({
+  course,
+  playingVideoId,
+  setPlayingVideoId,
+  isLoading,
+}) => {
   const modules = course?.modules;
   const { data: progressData } = useGetCourseProgressQuery();
   const planName = progressData?.data?.planName;
-  const heading = "Courses";
+  const heading = course?.title;
 
-  // Find the module and submodule containing the playingVideoId
+  // Track if we've already scrolled to a video
+  const hasScrolledRef = useRef(false);
+
+  // Find expanded module/submodule
   let expandedModuleIdx = null;
   let expandedSubmoduleId = null;
-  let lessonRefMap = {}; // <--- Add this
   if (playingVideoId && modules) {
     modules.forEach((module, mi) => {
       module.submodules?.forEach((sub) => {
@@ -47,29 +49,46 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
     });
   }
 
-  // --- Add refs for each lesson ---
+  // Reset scroll when video changes
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [playingVideoId]);
+
+  // Store lesson refs
   const lessonRefs = useRef({});
 
-  // --- Scroll to the correct lesson when playingVideoId changes ---
-  useEffect(() => {
-    if (playingVideoId && lessonRefs.current[playingVideoId]) {
+  // Scroll helper
+  const scrollToPlayingVideo = useCallback(() => {
+    if (
+      playingVideoId &&
+      lessonRefs.current[playingVideoId] &&
+      !hasScrolledRef.current
+    ) {
       lessonRefs.current[playingVideoId].scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
+      hasScrolledRef.current = true;
     }
   }, [playingVideoId]);
 
+  // Trigger scroll after first render with playingVideoId
+  useEffect(() => {
+    if (playingVideoId) {
+      setTimeout(scrollToPlayingVideo, 150);
+    }
+  }, [playingVideoId, scrollToPlayingVideo]);
+
   return (
     <>
-      <h1 className='text-lg font-semibold mb-7 px-3'>{heading}</h1>
-      <div className='flex flex-col gap-y-7'>
+      <h1 className="text-lg font-semibold mb-7 px-3">{heading=="Advanced"?"VFX":"Editorial"}</h1>
+      <div className="flex flex-col gap-y-7">
         {isLoading ? (
           <CourseSkeletonLoader />
         ) : modules && modules.length > 0 ? (
           modules.map((module, i) => (
             <CourseCard
-              key={module._id + (i === expandedModuleIdx ? '-expanded' : '')}
+              key={module._id}
               title={module.name}
               img={module.thumbnailUrl}
               videoCount={countVideosInModule(module)}
@@ -78,15 +97,20 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
               setPlayingVideoId={setPlayingVideoId}
               course={course}
               planName={planName}
-              autoExpand={i === expandedModuleIdx || (!playingVideoId && i === 0)}
+              autoExpand={
+                i === expandedModuleIdx || (!playingVideoId && i === 0)
+              }
               autoExpandSubmoduleId={expandedSubmoduleId}
               lessonRefs={lessonRefs}
+              scrollToPlayingVideo={scrollToPlayingVideo}
             />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center gap-y-4 h-40 px-5 text-center rounded-xl shadow-lg">
             <span className="animate-pulse text-4xl">😢</span>
-            <h3 className="text-lg font-semibold text-red-500">Plan not Found</h3>
+            <h3 className="text-lg font-semibold text-red-500">
+              Plan not Found
+            </h3>
           </div>
         )}
       </div>
@@ -94,11 +118,19 @@ const CourseModuleList = ({ course, playingVideoId, setPlayingVideoId, isLoading
   );
 };
 
-// Update CourseCard and CourseCardExpand to accept and pass lessonRefs
-
 const CourseCard = ({
-  title, img, videoCount, submodules, playingVideoId, setPlayingVideoId, course, planName,
-  autoExpand = false, autoExpandSubmoduleId = null, lessonRefs
+  title,
+  img,
+  videoCount,
+  submodules,
+  playingVideoId,
+  setPlayingVideoId,
+  course,
+  planName,
+  autoExpand = false,
+  autoExpandSubmoduleId = null,
+  lessonRefs,
+  scrollToPlayingVideo,
 }) => {
   const [isExpanded, setIsExpanded] = useState(autoExpand);
 
@@ -106,7 +138,12 @@ const CourseCard = ({
     setIsExpanded(autoExpand);
   }, [autoExpand]);
 
-  const handleExpand = () => setIsExpanded(!isExpanded);
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+    if (!isExpanded && playingVideoId) {
+      setTimeout(scrollToPlayingVideo, 150);
+    }
+  };
 
   return (
     <>
@@ -153,6 +190,7 @@ const CourseCard = ({
           planName={planName}
           autoExpandSubmoduleId={autoExpandSubmoduleId}
           lessonRefs={lessonRefs}
+          scrollToPlayingVideo={scrollToPlayingVideo}
         />
       )}
     </>
@@ -170,81 +208,58 @@ const CourseCardExpand = ({
   course,
   planName,
   autoExpandSubmoduleId = null,
-  lessonRefs // <--- Accept lessonRefs as prop, do NOT redeclare below!
+  lessonRefs,
+  scrollToPlayingVideo,
 }) => {
   const params = useSearchParams();
-  // const dispatch = useDispatch();
   const videoId = params.get("videoId");
   const [dropdownStates, setDropdownStates] = useState({});
+  const hasSubmoduleExpandedRef = useRef(false);
 
-  // Auto-expand the submodule containing the playing video
+  // Auto-expand submodule for the playing video
   useEffect(() => {
-    if (autoExpandSubmoduleId) {
+    if (autoExpandSubmoduleId && !hasSubmoduleExpandedRef.current) {
       setDropdownStates((prev) => ({
         ...prev,
         [autoExpandSubmoduleId]: true,
       }));
-    }
-  }, [autoExpandSubmoduleId]);
+      hasSubmoduleExpandedRef.current = true;
 
-  useEffect(() => {
-    // Scroll only if the lesson card is in the DOM
-    if (
-      playingVideoId &&
-      lessonRefs.current[playingVideoId] &&
-      dropdownStates[autoExpandSubmoduleId]
-    ) {
-      setTimeout(() => {
-        lessonRefs.current[playingVideoId]?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100);
+      // scroll after expansion
+      setTimeout(scrollToPlayingVideo, 200);
     }
-  }, [playingVideoId, dropdownStates, autoExpandSubmoduleId, lessonRefs]);
+  }, [autoExpandSubmoduleId, scrollToPlayingVideo]);
 
   useEffect(() => {
     if (videoId) {
       setPlayingVideoId(videoId);
     }
-  }, [videoId]);
-
-  useEffect(() => {
-    // Scroll to the lesson card if playingVideoId is present
-    if (playingVideoId && lessonRefs.current[playingVideoId]) {
-      lessonRefs.current[playingVideoId].scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [playingVideoId]);
-
-  useEffect(() => {
-    if (
-      playingVideoId &&
-      lessonRefs.current[playingVideoId] &&
-      Object.values(dropdownStates).some(Boolean)
-    ) {
-      setTimeout(() => {
-        lessonRefs.current[playingVideoId]?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100);
-    }
-  }, [playingVideoId, dropdownStates, lessonRefs]);
+  }, [videoId, setPlayingVideoId]);
 
   const toggleDropdown = (index) => {
     setDropdownStates((prevState) => ({
       ...prevState,
       [index]: !prevState[index],
     }));
-  };
 
+    // Scroll if this submodule has the playing video
+    if (!dropdownStates[index]) {
+      setTimeout(scrollToPlayingVideo, 200);
+    }
+  };
+ console.log("my module",course)
   const isLocked = planName === "Beginner" && course?.title === "Advanced";
-  const getSubmoduleVideoCount = (submodule) => submodule?.videos?.length || 0;
+  const getSubmoduleVideoCount = (submodule) =>
+    submodule?.videos?.length || 0;
 
   return (
     <div className="flex flex-col gap-y-2">
+      {/* Module header */}
       <div
-        style={{ background: "linear-gradient(140deg, rgba(44, 104, 246, 0.49) 0%, rgba(133, 116, 246, 0.49) 100%)" }}
+        style={{
+          background:
+            "linear-gradient(140deg, rgba(44, 104, 246, 0.49) 0%, rgba(133, 116, 246, 0.49) 100%)",
+        }}
         className="flex gap-x-2 items-center cursor-pointer px-3 py-2"
       >
         <div className="rounded-lg w-16 h-12 relative">
@@ -266,6 +281,7 @@ const CourseCardExpand = ({
         </button>
       </div>
 
+      {/* Submodules */}
       <motion.div
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: "auto" }}
@@ -275,6 +291,7 @@ const CourseCardExpand = ({
       >
         {submodules?.map((submodule) => (
           <div key={submodule._id} className="flex flex-col">
+            {/* Submodule header */}
             {dropdownStates[submodule._id] ? (
               <div className="flex gap-x-2 my-4 items-center cursor-pointer px-2 pb-2 border-b border-gray-700">
                 <div className="rounded-lg w-14 h-10 relative">
@@ -287,16 +304,19 @@ const CourseCardExpand = ({
                 </div>
 
                 <div className="flex-grow w-32">
-                  <h1 className="text-md font-semibold mb-1 flex items-center gap-1 z-1000">
+                  <h1 className="text-md font-semibold mb-1 flex items-center gap-1">
                     {submodule.name}
-                    {submodule.planLevel === 2 && (
-                     <PremiumIcon size={20}/>
-                    )}
+                    {/* {course.title === "Advanced"&& <PremiumIcon size={20} />} */}
                   </h1>
-                  <p className="text-md text-gray-300 ">{getSubmoduleVideoCount(submodule)} videos</p>
+                  <p className="text-md text-gray-300 ">
+                    {getSubmoduleVideoCount(submodule)} videos
+                  </p>
                 </div>
 
-                <button onClick={() => toggleDropdown(submodule._id)} className="text-xs text-red-500 underline ml-auto">
+                <button
+                  onClick={() => toggleDropdown(submodule._id)}
+                  className="text-xs text-red-500 underline ml-auto"
+                >
                   <MinusIcon />
                 </button>
               </div>
@@ -312,9 +332,9 @@ const CourseCardExpand = ({
                     fill
                     style={{ borderRadius: "12px", objectFit: "cover" }}
                   />
-                  {submodule.planLevel === 2 && (
-                    <div className="absolute inset-0 flex items-center justify-center ">
-                      <PremiumIcon  size={20}/>
+                  {course.title === "Advanced" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <PremiumIcon size={20} />
                     </div>
                   )}
                   <span
@@ -331,7 +351,6 @@ const CourseCardExpand = ({
                 <div className="flex-grow w-32">
                   <h1 className="text-md font-normal mb-1 flex items-center gap-1">
                     {submodule.name}
-               
                   </h1>
                   <p className="text-[10px] truncate whitespace-nowrap">
                     {getSubmoduleVideoCount(submodule)} videos
@@ -340,63 +359,61 @@ const CourseCardExpand = ({
               </div>
             )}
 
-{dropdownStates[submodule._id] && (
-  <motion.div
-    initial={{ opacity: 0, height: 0 }}
-    animate={{ opacity: 1, height: "auto" }}
-    exit={{ opacity: 0, height: 0 }}
-    transition={{ duration: 0.3 }}
-    className="flex flex-col gap-y-3"
-  >
-    {submodule?.videos?.map((lesson, j) => {
-      // Check if this is the first submodule of the module
-      const isFirstSubmodule = submodules[0]._id === submodule._id;
-    
+            {/* Lessons */}
+            {dropdownStates[submodule._id] && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col gap-y-3"
+              >
+                {submodule?.videos?.map((lesson, j) => {
+                
 
-   
-      return (
-        <div
-          key={j}
-          className="relative"
-          ref={el => {
-            if (lesson._id && lessonRefs) lessonRefs.current[lesson._id] = el;
-          }}
-        >
-          {lesson.planLevel === 2 && (
-            <div className="relative top-2 left-2 z-1000">
-              <PremiumIcon className="w-5 h-5" />
-            </div>
-          )}
-          
-          <LessonCard
-            isplaying={playingVideoId === lesson?._id}
-            onPlay={() => {
-              if (isLocked) return;
-              setPlayingVideoId(lesson._id);
-            }}
-            level={submodule.planLevel}
-            videoId={lesson._id}
-            isFirstSubmodule={isFirstSubmodule}
-            title={lesson.title || "I am Title"}
-            thumbnail={lesson?.thumbnailUrl}
-            duration={`${String(lesson?.duration?.hours ?? 0).padStart(2, "0")}:${String(lesson?.duration?.minutes ?? 0).padStart(2, "0")}:${String(lesson?.duration?.seconds ?? 0).padStart(2, "0")}`}
-            isLocked={
-              planName === "Beginner" && 
-              submodule.planLevel === 2 && 
-              !isFirstSubmodule && // Only lock if not first submodule
-              j > 0 // And not first video
-            }
-            isFirstVideo={j === 0 || isFirstSubmodule} // Unlock if first video OR in first submodule
-          />
-        </div>
-      );
-    })}
-  </motion.div>
-)}
+                  return (
+                    <div
+                      key={lesson._id}
+                      ref={(el) => {
+                        if (lesson._id && lessonRefs) {
+                          lessonRefs.current[lesson._id] = el;
+                        }
+                      }}
+                    >
+                      {/* {course.title === "Advanced" && (
+                        <div className="relative top-4 left-4 z-10000">
+                          <PremiumIcon className="w-5 h-5" />
+                        </div>
+                      )} */}
+
+  <LessonCard
+  videoId={lesson._id}
+  thumbnail={lesson?.thumbnailUrl}
+  title={lesson.title}
+  description={lesson.description}
+  duration={`${String(lesson?.duration?.hours ?? 0).padStart(2, "0")}:${String(
+    lesson?.duration?.minutes ?? 0
+  ).padStart(2, "0")}:${String(lesson?.duration?.seconds ?? 0).padStart(2, "0")}`}
+  isplaying={playingVideoId === lesson?._id}
+  level={course.title === "Beginner" ? 1 : 2}
+  bookmarkedId={lesson.bookmarkedId}
+  bookmark={lesson.bookmark}
+  introductory={lesson.introductory}
+  onPlay={() => setPlayingVideoId(lesson._id)}
+  // 👇 add these
+  allVideos={submodule.videos}
+  videoIndex={j}
+/>
+
+
+                    </div>
+                  );
+                })}
+              </motion.div>
+            )}
           </div>
         ))}
       </motion.div>
-        
     </div>
   );
 };

@@ -167,11 +167,11 @@ const VideoDescription = ({
 
   return (
     <div className="text-white ms-6">
-      <div className="flex justify-between mb-3">
-        <h1 className="text-xl font-semibold">{title}</h1>
+      <div className="flex justify-between mb-2">
+        <h1 className="text-lg font-semibold">{title}</h1>
         {title && !isBookmarked && (
           <div
-            className="p-3 rounded-full sm:bg-[#181F2B] cursor-pointer -mb-3"
+            className="p-2 rounded-full sm:bg-[#181F2B] cursor-pointer  me-3"
             onClick={handleBookmark}
           >
             {!isBookmarked && <BookMark />}
@@ -179,7 +179,7 @@ const VideoDescription = ({
         )}
       </div>
 
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <p className="text-sm">
           {isExpanded ? description : truncatedText}
           {description?.length > 100 && (
@@ -191,10 +191,10 @@ const VideoDescription = ({
             </span>
           )}
         </p>
-      </div>
+      </div> */}
 
       {showTimeStamp && chapters?.length > 0 && (
-        <div className="mb-4" ref={chapterSection}>
+        <div className="mb-1" ref={chapterSection}>
           <h3 className="text-xl font-bold mb-2">Chapters</h3>
           <ul>
             {chapters.map((ch, i) => (
@@ -214,14 +214,15 @@ const VideoDescription = ({
         </div>
       )}
 
-      <div className="flex mx-10 gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center flex-wrap">
+      <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center flex-wrap">
    <TextIconBox
   title="Submit assignment"
   icon={<Assignment />}
   onClick={() => {
-    if (isCompleted) {
-      setIsAssignmentOpen(true);
+    if (!isCompleted) {
+      setIsAssignmentOpen(false);
     }
+  
   }}
   disabled={!isCompleted}
 />
@@ -253,13 +254,13 @@ const VideoDescription = ({
 const TextIconBox = ({ title, icon, onClick, disabled }) => (
   <div
     onClick={!disabled ? onClick : undefined}
-    className={`bg-[#2C68F626] flex-1  flex items-center justify-center gap-x-4 rounded-[8px] px-5 py-2 h-12 w-full md:w-auto border border-[var(--neon-purple)] ${
+    className={`bg-[#2C68F626] flex-1  flex items-center justify-center gap-x-4 rounded-[8px] px-2 py-2 h-12 w-full md:w-auto border border-[var(--neon-purple)] ${
       disabled
         ? "cursor-not-allowed opacity-50"
         : "cursor-pointer hover:bg-[#2C68F640]"
     }`}
   >
-    <h1 className="text-xs font-semibold">{title}</h1>
+    <h1 className="text-sm font-semibold">{title}</h1>
     {icon}
   </div>
 );

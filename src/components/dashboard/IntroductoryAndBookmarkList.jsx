@@ -5,7 +5,7 @@ import { useDeleteBookmarkMutation } from "@/store/Api/introAndBookmark";
 import {
   PremiumIcon
 } from "@/lib/svg_icons";
-import { setBeginnerFirstVideo } from "@/store/slice/general";
+import { setIsLocked ,setVideoLevel} from "@/store/slice/general";
 import {
   useGetCourseProgressQuery,
   useGetVideoProgressQuery,
@@ -129,71 +129,90 @@ export const LessonCard = ({
   duration,
   isplaying,
   level,
- isFirstSubmodule,
-  iscourse=false,
   bookmarkedId,
   bookmark = false,
   introductory = false,
   onPlay,
-   isFirstVideo = false,
-
-  isLocked = false 
+  allVideos = [],
+  videoIndex = 0,
 }) => {
   const route = useRouter();
-  const [progress, setProgress] = useState(0);
   const path = usePathname();
+  const dispatch = useDispatch();
+  const [progress, setProgress] = useState(0);
+
   const [deleteBookmark] = useDeleteBookmarkMutation();
-  const { courseId, updatedPercentageWatched, videoIdOfCurrentVideo } = useSelector((state) => state.general);
- const dispatch = useDispatch();
-  const videos = useSelector((state) => state.course.videos);
- 
-  const MapVideos = objectToMap(videos);
-  const currentVideoData = MapVideos.get(videoId);
 
-  const firstEntry = MapVideos.entries().next().value;
-  const currentVideoIndex = [...MapVideos.keys()].indexOf(videoId);
-  const previousVideoData = [...MapVideos.values()][currentVideoIndex - 1];
-
-  const isVideoUnlocked = firstEntry?.[0] === videoId || currentVideoData?.isCompleted || previousVideoData?.isCompleted;
+  const { courseId, updatedPercentageWatched, videoIdOfCurrentVideo } =
+    useSelector((state) => state.general);
 
   const { data: courseProgress } = useGetCourseProgressQuery(courseId);
 
+  // ✅ Progress for current + previous video
+  const currentVideoProgress = courseProgress?.data?.courseProgress?.find(
+    (v) => v.video === videoId
+  );
+
+  const prevVideo = videoIndex > 0 ? allVideos[videoIndex - 1] : null;
+  const prevVideoProgress = prevVideo
+    ? courseProgress?.data?.courseProgress?.find((v) => v.video === prevVideo._id)
+    : null;
+
+  // ✅ Check local Redux live update
+  const isCurrentVideoCompleted =
+    currentVideoProgress?.isCompleted ||
+    (videoId === videoIdOfCurrentVideo && updatedPercentageWatched === 100);
+
+  const isPrevVideoCompleted =
+    prevVideoProgress?.isCompleted ||
+    (prevVideo &&
+      prevVideo._id === videoIdOfCurrentVideo &&
+      updatedPercentageWatched === 100);
+
+  // ✅ Unlock logic
+  const isFirstVideoInSubmodule = videoIndex === 0;
+  const isVideoUnlocked =
+    introductory ||
+    bookmark ||
+    isFirstVideoInSubmodule ||
+    isCurrentVideoCompleted ||
+    isPrevVideoCompleted;
+
+ useEffect(() => {
+  if (isplaying) {
+    dispatch(setIsLocked(!isVideoUnlocked));
+    dispatch(setVideoLevel(level));
+  }
+}, [isVideoUnlocked, isplaying, dispatch]);
+
+  // ✅ Update progress bar
   useEffect(() => {
-    
-    const foundVideo = courseProgress?.data?.courseProgress?.find(
-      (video) => video.video === videoId
-    );
-    if (foundVideo) {
-      setProgress(foundVideo?.percentageWatched);
+    if (currentVideoProgress) {
+      setProgress(currentVideoProgress?.percentageWatched || 0);
     }
-  }, []);
+  }, [currentVideoProgress]);
 
   useEffect(() => {
+
+    
     if (updatedPercentageWatched && videoId === videoIdOfCurrentVideo) {
       setProgress(updatedPercentageWatched);
     }
   }, [updatedPercentageWatched, videoId, videoIdOfCurrentVideo]);
 
-const fetchVideo = () => {
-  // Allow access if:
-  // 1. It's the first video in any submodule (isFirstVideo)
-  // 2. OR it's in the first submodule of a module (handled by parent)
-  // 3. OR it's an introductory/bookmark video
-  // 4. OR it's unlocked through normal progression
-  if (!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) return;
-  
-  if (introductory) {
-    route.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
-    onPlay();
-    return;
-  }
+  const fetchVideo = () => {
+    if (!isVideoUnlocked && !introductory && !bookmark) return;
 
-  
-   const levels = level==1 ? "beginner" : "advanced";
-    dispatch(setBeginnerFirstVideo(isFirstSubmodule));
-  route.push(`/dashboard/player-dashboard/${levels}?videoId=${videoId}`);
-  onPlay();
-};
+    if (introductory) {
+      route.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
+      onPlay();
+      return;
+    }
+
+    const levels = level == 1 ? "beginner" : "advanced";
+    route.push(`/dashboard/player-dashboard/${levels}?videoId=${videoId}`);
+    onPlay();
+  };
 
   const removeBookmark = async () => {
     try {
@@ -206,19 +225,23 @@ const fetchVideo = () => {
   };
 
   return (
-  <div className="flex gap-x-3 items-center cursor-pointer px-3">
+    <div className="flex gap-x-3 items-center cursor-pointer px-3">
       <div
-        className={`rounded-t-xl rounded-b-lg w-36 h-20 relative ${(!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) ? "brightness-30 cursor-not-allowed" : ""
-          }`}
+        className={`rounded-t-xl rounded-b-lg w-36 h-20 relative ${
+          !isVideoUnlocked && !introductory && !bookmark
+            ? "brightness-30 cursor-not-allowed"
+            : ""
+        }`}
         onClick={fetchVideo}
       >
-        {(!isFirstVideo && (isLocked || (!isVideoUnlocked && !introductory && !bookmark))) && (
-          <div className='z-50 absolute top-[50%] left-[50%] translate-y-[-50%] translate-x-[-50%] h-full flex items-center justify-center backdrop-blur-sm bg-[#0000001F] w-full'>
+        {!isVideoUnlocked && !introductory && !bookmark && (
+          <div className="z-50 absolute top-[50%] left-[50%] translate-y-[-50%] translate-x-[-50%] h-full flex items-center justify-center backdrop-blur-sm bg-[#0000001F] w-full">
             <Lock width={30} height={30} />
-            {level===2 ? <div className="absolute top-2 left-2 rounded-full p-1 z-100">
-              <PremiumIcon />
-        
-        </div>:""}
+            {level === 2 && (
+              <div className="absolute top-2 left-2 rounded-full p-1 z-100">
+                <PremiumIcon />
+              </div>
+            )}
           </div>
         )}
 
@@ -229,11 +252,11 @@ const fetchVideo = () => {
           className={`rounded-t-xl rounded-b-lg ${isplaying && "brightness-50"}`}
         />
 
-      
-           {level===2 ? <div className="absolute top-2 left-2 rounded-full p-1 z-100">
-              <PremiumIcon />
-        
-        </div>:""}
+        {level === 2 && (
+          <div className="absolute top-2 left-2 rounded-full p-1 z-100">
+            <PremiumIcon />
+          </div>
+        )}
         <span
           style={{
             background: "rgba(0, 0, 0, 0.50)",
@@ -246,7 +269,7 @@ const fetchVideo = () => {
 
         {isplaying && (
           <span className="absolute font-semibold text-[var(--yellow)] text-[10px] bottom-2 left-1 flex gap-x-1 items-center">
-            <OrangePlay /> Now Playing
+            <OrangePlay /> Now Playing 
           </span>
         )}
 
@@ -261,7 +284,9 @@ const fetchVideo = () => {
       <div className="flex-grow w-32">
         <h1 className="text-md font-normal mb-1 ">
           {isplaying ? (
-            <span className="text-md font-normal text-[var(--yellow)]">Opening file</span>
+            <span className="text-md font-normal text-[var(--yellow)]">
+              Opening file
+            </span>
           ) : (
             title
           )}
@@ -279,4 +304,3 @@ const fetchVideo = () => {
     </div>
   );
 };
-

@@ -4,7 +4,7 @@ import React, { Suspense } from 'react'
 
 const page = () => {
   return (
-    <div className='h-screen w-full'>
+    <div className='w-full'>
       <Suspense fallback={<PageLoader />}>
         <VideoDashboard />
       </Suspense>

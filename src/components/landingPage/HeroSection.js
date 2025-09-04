@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createMarkup } from "@/lib/functions";
 const HeroSection = ({ data }) => {
-  const caption = data?.caption.replace(/<\/?p>/g, "");
+  const caption = data?.caption?.replace(/<\/?p>/g, "");
   const words = caption?.split(" ");
   const firstPart = words?.slice(0, -1).join(" ");
   const lastPart = words && words[words?.length - 1];
   const [isMobile, setIsMobile] = useState(false);
-console.log(data.caption)
+console.log(data?.caption)
   useEffect(() => {
     const mobileWidth = window.innerWidth < 640;
     setIsMobile(mobileWidth);
@@ -34,7 +34,7 @@ console.log(data.caption)
       </div>
 
       {/* Background Image */}
-      <div className="absolute inset-0 -z-10 ">
+      <div className="absolute inset-0 -z-10  ">
         {isMobile ? (
           <Image
             src="/Hero section image - Mobile res.png"
@@ -45,9 +45,10 @@ console.log(data.caption)
         ) : (
           <Image
             src="/hero-image.png"
-            fill
+           fill
             alt="Hero Background"
-            // style={{ objectFit: "cover" }}
+            className="xl:min-h-[790px] xl:min-w-[1420px]"
+            style={{  filter: "brightness(0.7)" }}
           />
         )}
       </div>

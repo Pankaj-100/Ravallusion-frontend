@@ -21,6 +21,8 @@ const initialState = {
    sidebarTabIndex: 0,
    courseType: null, // 'photoshop' or 'premier-pro'
   shouldPlayFirstVideo: false,
+  isLocked: null,
+  videoLevel: null,
 }
 
 export const generalSlice = createSlice({
@@ -36,6 +38,12 @@ export const generalSlice = createSlice({
     },
         setCourseType: (state, action) => {
       state.courseType = action.payload;
+    },
+            setIsLocked: (state, action) => {
+      state.isLocked = action.payload;
+    },
+              setVideoLevel: (state, action) => {
+      state.videoLevel = action.payload;
     },
     setShouldPlayFirstVideo: (state, action) => {
       state.shouldPlayFirstVideo = action.payload;
@@ -95,6 +103,7 @@ export const generalSlice = createSlice({
 export const { setVideoIdOfcurrentVideo,setVideoTitle, setPaymentSuccess,
   setSearchValue,
   setSearchHistory,
+  setVideoLevel,
   setIsIndia,
     setCourseType,
   setShouldPlayFirstVideo,
@@ -103,6 +112,6 @@ export const { setVideoIdOfcurrentVideo,setVideoTitle, setPaymentSuccess,
    setBeginnerFirstVideo,
   setCourseId,
   setFirstVideoId, setPlanId, setPlanPrice, setPlanType,setUsdPrice, setIntroductoryVideoscount,
-  setBookmarkCount, setSubmoduleId } = generalSlice.actions
+  setBookmarkCount, setSubmoduleId,setIsLocked } = generalSlice.actions
 
 export default generalSlice.reducer

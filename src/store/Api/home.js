@@ -54,6 +54,9 @@ export const homeApi = createApi({
         }),
         getAboutUs: builder.query({
             query: () => `content/page/about-us`
+        }),
+        getFooterLink: builder.query({
+            query: () => `footer`
         })
     })
 })
@@ -63,6 +66,7 @@ export const { useGetLandingPageDataQuery,
     useGetStaticDataQuery,
     useGetCertificateQuery,
     useGetFaqQuery,
+    useGetFooterLinkQuery,
     useGetLandingCarouselQuery,
     useGetLatestTutorialQuery,
     useGetHeroSectionQuery,

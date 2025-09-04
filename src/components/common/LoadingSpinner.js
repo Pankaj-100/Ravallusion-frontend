@@ -64,7 +64,7 @@ const LoadingSpinner = ({ className = '' }) => {
 export const SimpleLoader = () => {
   return (
     <div className="flex justify-center items-center w-full h-full">
-      {/* <div className="w-12 h-12 border-4 border-[var(--neon-purple)] border-t-black rounded-full animate-spin"></div> */}
+      <div className="w-12 h-12 border-4 border-[var(--neon-purple)] border-t-black rounded-full animate-spin"></div>
     </div>
   );
 };

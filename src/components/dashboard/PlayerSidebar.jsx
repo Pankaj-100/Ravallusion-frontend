@@ -7,174 +7,101 @@ import {
   IntroductoryList,
 } from "./IntroductoryAndBookmarkList";
 import CourseModuleList from "./CourseModuleList";
-import { setSidebarTabIndex, setCourseId, setFirstVideoId,setCourseType } from "@/store/slice/general";
-import { useGetBookmarkQuery, useGetIntroductoryQuery } from "@/store/Api/introAndBookmark";
+import { setSidebarTabIndex } from "@/store/slice/general";
+import {
+  useGetBookmarkQuery,
+  useGetIntroductoryQuery,
+} from "@/store/Api/introAndBookmark";
 import { useGetSubscribedPlanCourseQuery } from "@/store/Api/course";
 import { useGetPlanDataQuery } from "@/store/Api/home";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import { setCourseId, setFirstVideoId, setCourseType } from "@/store/slice/general";
 import { setCourse } from "@/store/slice/course";
 import Progresscard from "../dashboard/Progresscard";
-import { useGetSubscriptionDetailQuery } from '@/store/Api/course'
-const mergeModulesByTitle = (modules = []) => {
-  const moduleMap = {};
-
-  modules.forEach((module) => {
-    const title = module.name;
-
-    if (!moduleMap[title]) {
-      moduleMap[title] = {
-        ...module,
-        submodules: (module.submodules || []).map((sub) => ({
-          ...sub,
-          planLevel: module.level, 
-        })),
-      };
-    } else {
-      const additionalSubmodules = (module.submodules || []).map((sub) => ({
-        ...sub,
-        planLevel: module.level,
-      }));
-
-      moduleMap[title].submodules = [
-        ...moduleMap[title].submodules,
-        ...additionalSubmodules,
-      ];
-    }
-  });
-
-  return Object.values(moduleMap);
-};
+import { useRouter } from "next/navigation";
 
 const PlayerSidebar = () => {
-
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [playingVideoId, setPlayingVideoId] = useState(null);
   const [beginnerPlanId, setBeginnerPlanId] = useState(null);
   const [advancedPlanId, setAdvancedPlanId] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [playingVideoId, setPlayingVideoId] = useState(null);
 
-     const { data:planName, isLoading } = useGetSubscriptionDetailQuery();
-
-const userPlan= planName?.data?.subscriptionDetails?.planType;
+  const route = useRouter();
   const dispatch = useDispatch();
   const path = usePathname();
-const typecourse = path.includes("beginner") ? "beginner" : "advanced";
-  const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
-   const tooltype = useSelector((state) => state.general.courseType);
 
   const { data: plansData } = useGetPlanDataQuery();
-  const { data: bookmarkedData } = useGetBookmarkQuery();
+  const { data } = useGetBookmarkQuery();
   const { data: introductoryData } = useGetIntroductoryQuery();
 
-  const {
-    data: beginnerCourseData,
-    isLoading: beginnerLoading,
-  } = useGetSubscribedPlanCourseQuery(beginnerPlanId, { skip: !beginnerPlanId });
-
-  const {
-    data: advancedCourseData,
-    isLoading: advancedLoading,
-  } = useGetSubscribedPlanCourseQuery(advancedPlanId, { skip: !advancedPlanId });
-
-  const bookmarkedVideos = bookmarkedData?.bookmarks || [];
-  const introductoryVideos = introductoryData?.data?.introductoryVideos || [];
+  // Get both beginner and advanced courses
+  const { data: beginnerCourseData, isLoading: beginnerLoading } =
+    useGetSubscribedPlanCourseQuery(beginnerPlanId, { skip: !beginnerPlanId });
+  const { data: advancedCourseData, isLoading: advancedLoading } =
+    useGetSubscribedPlanCourseQuery(advancedPlanId, { skip: !advancedPlanId });
 
   const beginnerCourse = beginnerCourseData?.data?.course;
-  const advanceCourse = advancedCourseData?.data?.course;
- 
+  const advancedCourse = advancedCourseData?.data?.course;
 
-  useEffect(() => {
-    setActiveIndex(sidebarTabIndex);
-  }, [sidebarTabIndex]);
+  const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
+  const tooltype = useSelector((state) => state.general.courseType);
 
+  const introductoryVideos = introductoryData?.data?.introductoryVideos || [];
+  const bookmarkedVideos = data?.bookmarks || [];
+
+  // Set plan IDs for both beginner and advanced
   useEffect(() => {
-    if (plansData?.data?.plans?.length) {
-      const beginnerPlan = plansData.data.plans.find((p) => p.level === 1);
-      const advancedPlan = plansData.data.plans.find((p) => p.level === 2);
+    if (plansData?.data?.plans) {
+      const beginnerPlan = plansData.data.plans.find((plan) => plan.level === 1);
+      const advancedPlan = plansData.data.plans.find((plan) => plan.level === 2);
       setBeginnerPlanId(beginnerPlan?._id);
       setAdvancedPlanId(advancedPlan?._id);
     }
   }, [plansData]);
 
-
   useEffect(() => {
-    if (beginnerCourse || advanceCourse) {
-      const beginnerModules = (beginnerCourse?.modules || []).map((mod) => ({ ...mod, level: 1 }));
-      const advancedModules = (advanceCourse?.modules || []).map((mod) => ({ ...mod, level: 2 }));
+    setActiveIndex(sidebarTabIndex);
+  }, [sidebarTabIndex]);
 
-
-console.log("advancedModules photshop",advancedModules[0]?.submodules?.[0]?.videos?.[0]?._id);
-console.log("advancedModules premium pro",advancedModules[1]?.submodules?.[0]?.videos?.[0]?._id);
-
-      const allModules = [...beginnerModules, ...advancedModules];
-      const mergedModules = mergeModulesByTitle(allModules);
-
-      const mergedCourse = {
-        ...beginnerCourse,
-        modules: mergedModules,
-      };
-
-if(typecourse=="beginner")
-{
-
- dispatch(setCourseId(beginnerCourse?._id));
-}
-else
-{
-
- dispatch(setCourseId(advanceCourse?._id));
-}
+  // Determine course type based on URL
+  const courseType = path.includes("beginner") ? "beginner" : "advanced";
+//  dispatch(setCourseType("beginner"));
+  // Set courseId and firstVideoId based on course type and tool type
+  useEffect(() => {
+    console.log("useEffect triggered with:", { courseType, tooltype });
+    if (courseType === "beginner" && beginnerCourse) {
+      dispatch(setCourseId(beginnerCourse?._id));
+      dispatch(setCourse(beginnerCourse));
      
-
-dispatch(setCourse(mergedCourse));
-
-
-
-if(tooltype==null){
+      // Set first video ID based on tool type
+      if (tooltype === "photoshop") {
+        const firstVideoId = beginnerCourse?.modules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
+           
+        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+      } else if (tooltype === "premier-pro") {
+        const firstVideoId = beginnerCourse?.modules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
  
-      const firstVideoId = mergedModules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
-      if (firstVideoId) {
-        dispatch(setFirstVideoId(firstVideoId));
+        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+      }
+    } else if (courseType === "advanced" && advancedCourse) {
+      dispatch(setCourseId(advancedCourse?._id));
+      dispatch(setCourse(advancedCourse));
+      
+      // Set first video ID based on tool type
+      if (tooltype === "photoshop") {
+        const firstVideoId = advancedCourse?.modules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
+         console.log(" adv photoshop----------",firstVideoId)
+        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+      } else if (tooltype === "premier-pro") {
+        const firstVideoId = advancedCourse?.modules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
+         console.log(" adv [remium pro]----------",firstVideoId)
+        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
       }
     }
+     dispatch(setCourse(beginnerCourse));
 
-
-    if(tooltype=="photoshop"  ){
-      if(typecourse=="beginner"){
-        const firstVideoId = mergedModules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
-      if (firstVideoId) {
-        dispatch(setFirstVideoId(firstVideoId));
-      }
-    }
-           if(typecourse=="advanced"){
-        const firstVideoId = advancedModules[0]?.submodules?.[0]?.videos?.[0]?._id;
-      if (firstVideoId) {
-        dispatch(setFirstVideoId(firstVideoId));
-      }
-    
-
-    }
-  }
-       if(tooltype=="premier-pro"  ){
-        if(typecourse=="beginner"){
-        const firstVideoId = mergedModules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
-      if (firstVideoId) {
-        dispatch(setFirstVideoId(firstVideoId));
-      }
-    }
-         if(typecourse=="advanced"){
-        const firstVideoId = advancedModules[1]?.submodules?.[0]?.videos?.[0]?._id;
-      if (firstVideoId) {
-        dispatch(setFirstVideoId(firstVideoId));
-      }
-    }
-
-    }
-
-
-    }
-  }, [beginnerCourse, advanceCourse,typecourse, tooltype,dispatch]);
-
+  }, [beginnerCourse, advancedCourse, courseType, tooltype, dispatch]);
 
   return (
     <>
@@ -205,24 +132,27 @@ if(tooltype==null){
         />
       </div>
 
-      <div className="py-4 bg-[#181F2B] rounded-2xl h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar-hide">
+      <div className="py-4 bg-[#181F2B] rounded-2xl h-[73vh] overflow-y-auto custom-scrollbar-hover">
         {activeIndex === 0 && (
           <>
-          <CourseModuleList
-            course={{
-              ...beginnerCourse,
-              modules: mergeModulesByTitle([
-                ...(beginnerCourse?.modules || []).map((mod) => ({ ...mod, level: 1 })),
-                ...(advanceCourse?.modules || []).map((mod) => ({ ...mod, level: 2 })),
-              ]),
-            }}
-            isLoading={beginnerLoading || advancedLoading}
-            playingVideoId={playingVideoId}
-            setPlayingVideoId={setPlayingVideoId}
-          />
-           <Progresscard/>
-           </>
-           
+            {courseType === "beginner" && beginnerCourse && (
+              <CourseModuleList
+                course={beginnerCourse}
+                isLoading={beginnerLoading}
+                playingVideoId={playingVideoId}
+                setPlayingVideoId={setPlayingVideoId}
+              />
+            )}
+            {courseType === "advanced" && advancedCourse && (
+              <CourseModuleList
+                course={advancedCourse}
+                isLoading={advancedLoading}
+                playingVideoId={playingVideoId}
+                setPlayingVideoId={setPlayingVideoId}
+              />
+            )}
+            <Progresscard />
+          </>
         )}
 
         {activeIndex === 1 && (
@@ -259,7 +189,6 @@ const ActionCard = ({ icon, isActive, onClick }) => {
       className="hover:!bg-gray-800 py-4 h-14 flex-grow rounded-lg flex items-center justify-center cursor-pointer"
     >
       {icon}
-   
     </div>
   );
 };

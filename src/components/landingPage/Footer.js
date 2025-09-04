@@ -1,42 +1,12 @@
-import { FacebookColorIcon, FooterBg, InstagramColorIcon, LinkedInColorIcon, TelegramColorIcon, TwitterColorIcon, YoutubeColorIcon } from "@/lib/svg_icons";
+"use client";
+
 import {
-  FacebookIcon,
+  FooterBg,
   FooterRavallusion,
-  InstagramIcon,
-  LinkedInIcon,
-  TelegramIcon,
-  TwitterIcon,
-  YoutubeIcon,
 } from "@/lib/svg_icons";
 import Image from "next/image";
 import Link from "next/link";
-
-const socialHandles = [
-  {
-    Icon: FacebookColorIcon,
-    link: "#",
-  },
-  {
-    Icon: TwitterColorIcon,
-    link: "#",
-  },
-  {
-    Icon: LinkedInColorIcon,
-    link: "#",
-  },
-  {
-    Icon: InstagramColorIcon,
-    link: "#",
-  },
-  {
-    Icon: YoutubeColorIcon,
-    link: "#",
-  },
-  {
-    Icon: TelegramColorIcon,
-    link: "#",
-  },
-];
+import { useGetFooterLinkQuery } from "@/store/Api/home";
 
 const quickLinks = [
   {
@@ -64,14 +34,18 @@ const quickLinks = [
     link: "/contact-us",
   },
 ];
+
 const Footer = () => {
+  const { data, isLoading } = useGetFooterLinkQuery();
+
+  const socialHandles = data?.data?.footers || [];
+
   return (
-    <div
-      // data-aos="fade-up"
-      className="relative flex flex-col items-center p-0 m-0 overflow-hidden "
-    >
+    <div className="relative flex flex-col items-center p-0 m-0 overflow-hidden">
       <FooterBg className="absolute -top-[50rem] xl:-top-[48rem]  -left-[62rem] md:-left-[45rem] xl:-left-[35rem]  -z-[1000]" />
+
       <div className="flex self-stretch justify-between flex-col md:flex-row gap-10 py-10 px-4 md:px-[9%] 2xl:px-[10rem]">
+        {/* Left Section */}
         <div className="flex flex-col gap-5 w-screen sm:w-[30rem] 2xl:!w-[33rem]">
           <div>
             {/* Logo */}
@@ -89,21 +63,34 @@ const Footer = () => {
               expert-led courses.
             </div>
           </div>
+
+          {/* API Social Links */}
           <div className="flex gap-3">
-            {socialHandles.map((item, index) => (
-              <Link
-                key={index}
-                href={item.link}
-                className="w-10 h-10 bg-white/10 rounded-full flex justify-center items-center hover:scale-110"
-              >
-                <item.Icon />
-              </Link>
-            ))}
+            {!isLoading &&
+              socialHandles.map((item, index) => (
+                <Link
+                  key={item._id || index}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-white/10 rounded-full flex justify-center items-center hover:scale-110"
+                >
+                  <Image
+                    src={item.iconPath}
+                    alt="social-icon"
+                    width={20}
+                    height={20}
+                  />
+                </Link>
+              ))}
           </div>
+
           <div className="text-xs">
             © 2025 Ravallusion Training Academy LLP. All rights reserved
           </div>
         </div>
+
+        {/* Right Section */}
         <div className="flex flex-col gap-5">
           <div className="text-[22px] 2xl:text-3xl font-bold">Quick Links</div>
           <div className="flex flex-col gap-3 lg:items-end justify-center">
@@ -111,7 +98,7 @@ const Footer = () => {
               <Link
                 key={item.title}
                 href={item.link}
-                className="text-base 2xl:text-lg text-[var(--light-gray)] hover:underline "
+                className="text-base 2xl:text-lg text-[var(--light-gray)] hover:underline"
               >
                 {item.title}
               </Link>
@@ -121,7 +108,7 @@ const Footer = () => {
       </div>
 
       <div className="px-3">
-        <FooterRavallusion className="w-full h-full md:h-[11rem] 2xl:h-[12.5rem] " />
+        <FooterRavallusion className="w-full h-full md:h-[11rem] 2xl:h-[12.5rem]" />
       </div>
     </div>
   );

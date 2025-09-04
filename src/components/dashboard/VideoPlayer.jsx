@@ -226,7 +226,7 @@ useEffect(() => {
   const foundVideo = courseProgress?.data?.courseProgress?.find(
     (v) => v.video === videoId
   );
-  console.log("foundVideo", foundVideo);
+
   setIsVideoCompleted(foundVideo?.isCompleted || false); 
 
   const lastPosition = foundVideo?.lastPosition || 0;
@@ -799,7 +799,7 @@ const handleVideoPlayerInteraction = () => {
           url={src}
           playing={playing}
           controls={false}
-          
+        
           width="100%"
           height="100%"
           playbackRate={playbackSpeed}
@@ -812,18 +812,25 @@ const handleVideoPlayerInteraction = () => {
               }}>{playIcon} </div>}
           light={
             <div
-              className={"flex justify-center thumbnail-container"}
+              className="flex justify-center items-center thumbnail-container"
               style={{
                 height: "100%",
                 width: "100%",
                 zIndex: 99,
                 background: "rgba(0,0,0)",
+                position: "relative",
               }}
             >
-              <div className="thumbnail-wrapper">
+              <div className="thumbnail-wrapper" style={{ position: "relative", width: "100%", height: "100%" }}>
                 <Image
                   src={imgSrc}
                   alt="Thumbnail"
+                  
+                  style={{
+                    objectFit: "cover",
+                    width: "100%",
+                    height: "100%",
+                  }}
                   className="thumbnail-image"
                   onClick={() => {
                     setLoading(true);
