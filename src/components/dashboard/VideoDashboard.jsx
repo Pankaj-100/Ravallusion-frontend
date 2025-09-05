@@ -147,9 +147,9 @@ const VideoDashboard = () => {
 
   return (
     <div className="lg:mt-2 flex lg:flex-row flex-col ">
-      <div className="lg:mr-4 xl:mr-4 w-full lg:w-[50%] lg:ms-10">
-        <div className="xl:min-h-[420px] lg:min-h-[420px] md:min-h-[420px]  rounded-md w-full lg:ms-6 bg-black flex items-center justify-center relative">
-       {isLoading || courseProgressLoading ? (
+      <div className="lg:mr-4 xl:mr-4 w-full lg:w-[52%] lg:ms-10">
+<div className="relative w-full aspect-video rounded-md bg-black">   
+      {isLoading || courseProgressLoading ? (
   // ⏳ While fetching course/video data
   <SimpleLoader />
 ) : planType === "Beginner" && videoLevel === 2 ? (
