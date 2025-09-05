@@ -167,7 +167,7 @@ const VideoDescription = ({
 
   return (
     <div className="text-white ms-6">
-      <div className="flex justify-between mb-2">
+      <div className="flex justify-between my-2">
         <h1 className="text-lg font-semibold">{title}</h1>
         {title && !isBookmarked && (
           <div
@@ -179,7 +179,7 @@ const VideoDescription = ({
         )}
       </div>
 
-      {/* <div className="mb-4">
+      <div className="mb-2">
         <p className="text-sm">
           {isExpanded ? description : truncatedText}
           {description?.length > 100 && (
@@ -191,7 +191,7 @@ const VideoDescription = ({
             </span>
           )}
         </p>
-      </div> */}
+      </div>
 
       {showTimeStamp && chapters?.length > 0 && (
         <div className="mb-1" ref={chapterSection}>

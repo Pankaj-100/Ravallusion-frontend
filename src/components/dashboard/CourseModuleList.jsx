@@ -271,7 +271,7 @@ const CourseCardExpand = ({
           />
         </div>
 
-        <div className="flex-grow">
+        <div className="flex-grow" onClick={onCollapse}>
           <h1 className="text-md font-semibold mb-1">{title}</h1>
           <p className="text-md">{videoCount} videos</p>
         </div>
@@ -303,7 +303,7 @@ const CourseCardExpand = ({
                   />
                 </div>
 
-                <div className="flex-grow w-32">
+                <div className="flex-grow w-32" onClick={() => toggleDropdown(submodule._id)}>
                   <h1 className="text-md font-semibold mb-1 flex items-center gap-1">
                     {submodule.name}
                     {/* {course.title === "Advanced"&& <PremiumIcon size={20} />} */}

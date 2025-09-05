@@ -228,7 +228,7 @@
     };
 
     return (
-      <div className="flex gap-x-3 items-center cursor-pointer px-3">
+      <div className="flex gap-x-3 items-center cursor-pointer px-3"    onClick={fetchVideo}>
         <div
           className={`rounded-t-xl rounded-b-lg w-36 h-20 relative ${
             !isVideoUnlocked && !introductory && !bookmark
@@ -288,7 +288,7 @@
           <h1 className="text-md font-normal mb-1 ">
             {isplaying ? (
               <span className="text-md font-normal text-[var(--yellow)]">
-                Opening file
+                {title}
               </span>
             ) : (
               title
