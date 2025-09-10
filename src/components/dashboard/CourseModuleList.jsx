@@ -81,8 +81,8 @@ const CourseModuleList = ({
 
   return (
     <>
-      <h1 className="text-lg font-semibold mb-7 px-3">{heading=="Advanced"?"VFX":"Editorial"}</h1>
-      <div className="flex flex-col gap-y-7">
+      <h1 className="text-xl font-bold mb-7 px-3">{heading=="Advanced"?"VFX":"Editorial"}</h1>
+      <div className="flex flex-col gap-y-4">
         {isLoading ? (
           <CourseSkeletonLoader />
         ) : modules && modules.length > 0 ? (
@@ -171,7 +171,7 @@ const CourseCard = ({
           </div>
 
           <div className="flex-grow w-32">
-            <h1 className="text-md font-normal mb-1">{title}</h1>
+            <h1 className="text-lg font-semibold mb-1">{title}</h1>
             <p className="text-md truncate whitespace-nowrap">
               {videoCount} videos
             </p>
@@ -247,7 +247,6 @@ const CourseCardExpand = ({
       setTimeout(scrollToPlayingVideo, 200);
     }
   };
- console.log("my module",course)
   const isLocked = planName === "Beginner" && course?.title === "Advanced";
   const getSubmoduleVideoCount = (submodule) =>
     submodule?.videos?.length || 0;
@@ -290,11 +289,11 @@ const CourseCardExpand = ({
         className="flex flex-col"
       >
         {submodules?.map((submodule) => (
-          <div key={submodule._id} className="flex flex-col">
+          <div key={submodule._id} className="flex flex-col  ">
             {/* Submodule header */}
             {dropdownStates[submodule._id] ? (
-              <div className="flex gap-x-2 my-4 items-center cursor-pointer px-2 pb-2 border-b border-gray-700">
-                <div className="rounded-lg w-14 h-10 relative">
+              <div className="flex gap-x-2 p-3 mt-4  items-center cursor-pointer px-2  border-2 bg-[#FFFFFF25] mx-2   border-[#FFFFFF24] rounded-t-2xl">
+                <div className="rounded-lg w-[100px] h-20 relative ">
                   <Image
                     src={submodule.thumbnailUrl}
                     alt="video png"
@@ -303,7 +302,7 @@ const CourseCardExpand = ({
                   />
                 </div>
 
-                <div className="flex-grow w-32" onClick={() => toggleDropdown(submodule._id)}>
+                <div className="flex-grow w-32  " onClick={() => toggleDropdown(submodule._id)}>
                   <h1 className="text-md font-semibold mb-1 flex items-center gap-1">
                     {submodule.name}
                     {/* {course.title === "Advanced"&& <PremiumIcon size={20} />} */}
@@ -322,7 +321,7 @@ const CourseCardExpand = ({
               </div>
             ) : (
               <div
-                className="flex gap-x-3 px-3 items-center cursor-pointer my-3"
+                className="flex gap-x-3 px-3 items-center cursor-pointer my-3 "
                 onClick={() => toggleDropdown(submodule._id)}
               >
                 <div className="bg-blue-400 rounded-xl w-40 h-20 relative">
@@ -366,7 +365,8 @@ const CourseCardExpand = ({
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="flex flex-col gap-y-3"
+                className="flex flex-col gap-y-3 mx-2 py-2 border-2 border-t-0  bg-[#FFFFFF14]  border-[#FFFFFF24] rounded-b-2xl" 
+
               >
                 {submodule?.videos?.map((lesson, j) => {
                 
@@ -389,6 +389,7 @@ const CourseCardExpand = ({
   <LessonCard
   videoId={lesson._id}
   thumbnail={lesson?.thumbnailUrl}
+  locked={lesson?.lock }
   title={lesson.title}
   description={lesson.description}
   duration={`${String(lesson?.duration?.hours ?? 0).padStart(2, "0")}:${String(
@@ -400,9 +401,11 @@ const CourseCardExpand = ({
   bookmark={lesson.bookmark}
   introductory={lesson.introductory}
   onPlay={() => setPlayingVideoId(lesson._id)}
-  // 👇 add these
   allVideos={submodule.videos}
   videoIndex={j}
+  parentSubmoduleIndex={submodules.findIndex(s => s._id === submodule._id)}
+  allSubmodules={submodules}
+  
 />
 
 

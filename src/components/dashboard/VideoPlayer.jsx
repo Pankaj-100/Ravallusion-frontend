@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useImperativeHandle } from "react";
-import ReactPlayer from "react-player";
 import {
   FaArrowLeft,
   FaBackward,
@@ -28,18 +27,15 @@ import {
   MdReplay,
   MdTune,
 } from "react-icons/md";
-
-import ErrorBoundary from "@/app/utils/errorBoundaries";
-// import { imgAddr, vidAddr } from "../features/api";
 import { useMediaQuery } from "react-responsive";
-import {
-  useGetCourseProgressQuery,
-} from "@/store/Api/courseProgress";
-
 import { toast } from "react-toastify";
 import { ChevronRight } from "lucide-react";
 import { cdnDomain } from "@/lib/functions";
 import { useDispatch, useSelector } from "react-redux";
+
+// Import Shaka Player
+// import shaka from 'shaka-player/dist/shaka-player.ui.js';
+import 'shaka-player/dist/controls.css';
 
 const VideoPlayer = ({
   source,
@@ -53,16 +49,16 @@ const VideoPlayer = ({
   ref,
   registerVideoRef,
   autoPlay,
-  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-20 w-20 " />,
+  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer" />,
   latestVideo = false,
-   onPlayChange = () => {},
+  onPlayChange = () => {},
   showTimeStamp,
   setShowTimeStamp,
   iscourse,
+  forward,
   chapterRef,
   chapters,
-  setIsCompleted
-    // setVideoPlaying,
+  setIsCompleted=false
 }) => {
 
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
@@ -92,29 +88,118 @@ const VideoPlayer = ({
   const [isVideoCompleted, setIsVideoCompleted] = useState(null);
   const [lastPositon, setLastPosition] = useState(0);
   const [isClient, setIsClient] = useState(null);
+  const [currentChapter, setCurrentChapter] = useState("");
   const progressRef = useRef(null);
   const containerRef = useRef(null);
   const menuRef = useRef(null);
+  const videoRef = useRef(null);
   const playerRef = useRef(null);
   const timeoutId = useRef(null);
   const playbackOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
-  const [currentChapter, setCurrentChapter] = useState("");
 
   const imgSrc = poster;
-
   const [src, setSrc] = useState(`${cdnDomain}/${source}/720p.m3u8`);
-  
- 
-    const { refetch: refetchCourseProgress } = useGetCourseProgressQuery();
 
-  if(sidebarTabIndex==1)
-  {
-    iscourse=false;
-  }
+  // DRM configuration (update with your actual DRM config)
+  // const drmConfig = {
+  //   drm: {
+  //     servers: {
+  //       'com.widevine.alpha': 'https://your-license-server.com/widevine',
+  //       'com.microsoft.playready': 'https://your-license-server.com/playready'
+  //     }
+  //   }
+  // };
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Initialize Shaka Player
+useEffect(() => {
+  if (!isClient || !videoRef.current) return;
+
+  async function initShaka() {
+    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+    // install polyfills
+    shaka.polyfill.installAll();
+
+    if (!shaka.Player.isBrowserSupported()) {
+      console.error("Browser not supported by Shaka Player!");
+      return;
+    }
+
+    const player = new shaka.Player(videoRef.current);
+    playerRef.current = player;
+
+    player.addEventListener("error", onPlayerError);
+
+    // DRM config
+    // player.configure(drmConfig);
+
+    // Load your video
+    loadSource(player, src);
+  }
+
+  initShaka();
+
+  return () => {
+    if (playerRef.current) {
+      playerRef.current.destroy();
+      playerRef.current = null;
+    }
+  };
+}, [isClient, src]);
+
+
+  // Load source with Shaka Player
+  const loadSource = async (player, sourceUrl) => {
+    try {
+      setLoading(true);
+      await player.load(sourceUrl);
+      setLoading(false);
+      
+      // Set up event listeners
+      videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
+      videoRef.current.addEventListener('durationchange', handleDurationChange);
+      videoRef.current.addEventListener('ended', handleEnded);
+      videoRef.current.addEventListener('waiting', handleBuffer);
+      videoRef.current.addEventListener('playing', handleBufferEnd);
+      videoRef.current.addEventListener('canplay', handleReady);
+      
+      // Set initial volume
+      videoRef.current.volume = volume;
+      
+      // Set initial playback rate
+      videoRef.current.playbackRate = playbackSpeed;
+      
+      // Seek to last position if available
+      if (lastPositon > 0) {
+        videoRef.current.currentTime = lastPositon;
+      }
+      
+      // Auto play if needed
+      if (autoPlay && firstPlay) {
+        setFirstPlay(false);
+        setPlaying(true);
+        onPlayChange(true);
+        await videoRef.current.play();
+      }
+    } catch (error) {
+  // console.error("Error loading video:", error);
+  if (error && error.code) {
+    // console.error("Shaka Error Code:", error.code, error);
+  } else {
+    // console.error("Raw Error:", JSON.stringify(error, null, 2));
+  }
+}
+
+  };
+
+  // Player error handler
+  const onPlayerError = (error) => {
+    // console.error('Error code', error.code, 'object', error);
+    toast.error("An error occurred while loading the video");
+  };
 
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -140,19 +225,25 @@ const VideoPlayer = ({
     play: () => {
       setPlaying(true);
       setFirstPlay(false);
+      if (videoRef.current) {
+        videoRef.current.play();
+      }
     },
     pause: () => {
       setPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
     },
     getCurrentTime: () => {
-      return playerRef.current ? playerRef.current.getCurrentTime() : 0;
+      return videoRef.current ? videoRef.current.currentTime : 0;
     },
     getDuration: () => {
-      return playerRef.current ? playerRef.current.getDuration() : 0;
+      return videoRef.current ? videoRef.current.duration : 0;
     },
     reset: () => {
-      if (playerRef.current) {
-        playerRef.current.seekTo(0);
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
       }
       setPlaying(false);
       setFirstPlay(true);
@@ -161,25 +252,26 @@ const VideoPlayer = ({
 
   // Handle autoplay prop changes
   useEffect(() => {
-    if (autoPlay && firstPlay) {
+    if (autoPlay && firstPlay && videoRef.current) {
       setFirstPlay(false);
       setPlaying(true);
-       onPlayChange(true);
+      onPlayChange(true);
+      videoRef.current.play();
     }
-  }, [autoPlay]);
+  }, [autoPlay, videoRef.current]);
 
   const toggleFullScreen = () => {
-    const videoElement = playerRef.current.getInternalPlayer();
+    if (!videoRef.current) return;
 
     if (isIOS()) {
-      if (videoElement.webkitEnterFullscreen) {
+      if (videoRef.current.webkitEnterFullscreen) {
         if (!isFullScreen) {
-          videoElement.webkitEnterFullscreen();
+          videoRef.current.webkitEnterFullscreen();
           setIsFullScreen(true);
           window.screen.orientation &&
             window.screen.orientation.lock("landscape").catch(() => {});
         } else {
-          videoElement.webkitExitFullscreen();
+          videoRef.current.webkitExitFullscreen();
           setIsFullScreen(false);
           window.screen.orientation && window.screen.orientation.unlock();
         }
@@ -227,11 +319,14 @@ useEffect(() => {
     (v) => v.video === videoId
   );
 
-  setIsVideoCompleted(foundVideo?.isCompleted || false); 
-
-  const lastPosition = foundVideo?.lastPosition || 0;
-  setLastPosition(lastPosition);
-}, [courseProgress, videoId]); 
+  if (foundVideo) {
+    setIsVideoCompleted(foundVideo.isCompleted === true);
+    setLastPosition(foundVideo.lastPosition || 0);
+  } else {
+    setIsVideoCompleted(false);
+    setLastPosition(0);
+  }
+}, [courseProgress, videoId]);
 
 
   useEffect(() => {
@@ -241,17 +336,16 @@ useEffect(() => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-
-        if (entry.isIntersecting) {
-    
+        if (entry.isIntersecting && videoRef.current) {
           setPlaying(true);
-        } else {
-       
+          videoRef.current.play();
+        } else if (videoRef.current) {
           setPlaying(false);
+          videoRef.current.pause();
         }
       },
       {
-        threshold: 0.5, // 50% of the video should be visible to trigger
+        threshold: 0.5,
       }
     );
 
@@ -289,7 +383,6 @@ useEffect(() => {
           ? screenfull.isFullscreen
           : document.fullscreenElement != null;
 
-        
         if (
           !isCurrentlyFullscreen &&
           window.lastDialogScrollPosition !== undefined
@@ -388,6 +481,33 @@ useEffect(() => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  useEffect(() => {
+  // Reset all playback states whenever new video is loaded
+  setFirstPlay(true);
+  setPlaying(false);
+  setShowRestartButton(false);
+  setIsVideoCompleted(false);
+  // setIsCompleted(false);   // reset parent completion flag too
+  setCurrentTime(0);
+  setPlayed(0);
+  setDuration(0);
+  setMaxWatchTime(0);
+  setHoveredTime(null);
+  setCurrentChapter("");
+  
+  // Reset video element state
+  if (videoRef.current) {
+    videoRef.current.currentTime = 0;
+    videoRef.current.pause();
+  }
+
+  // Clear progress interval
+  if (intervalId) {
+    clearInterval(intervalId);
+    setIntervalId(null);
+  }
+}, [videoId, source]);
+
 
   // Cleanup the interval when the component unmounts
   useEffect(() => {
@@ -398,15 +518,51 @@ useEffect(() => {
     };
   }, [intervalId]);
 
-  if (!isClient) {
-    return null;
+  // Event handlers for video events
+const handleTimeUpdate = () => {
+  if (!videoRef.current) return;
+
+  const currentTime = videoRef.current.currentTime;
+  const duration = videoRef.current.duration;
+  const played = (currentTime / duration) * 100;
+
+  setCurrentTime(currentTime);
+  setPlayed(played);
+
+  // Update progress bar
+  if (progressRef.current) {
+    const progressBar = progressRef.current;
+    const progressColor = `linear-gradient(to right, #2C68F6 ${
+      played + 0.1
+    }%, rgba(255,255,255,0.6) ${played}%, rgba(255,255,255,0.6) 100%)`;
+    progressBar.style.background = progressColor;
   }
 
-  //Functions.......................
+  // Update chapters if available
+  if (chapters?.length > 0) {
+    const current =
+      [...chapters].reverse().find((ch) => currentTime >= ch.time) ||
+      chapters[0];
+    if (current.title !== currentChapter) {
+      setCurrentChapter(current.title);
+    }
+  }
+
+  // ✅ Only ever increase maxWatchTime
+  if (!isVideoCompleted) {
+    setMaxWatchTime((prev) => Math.max(prev, currentTime));
+  }
+};
+
+
+  const handleDurationChange = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  };
 
   const handleReady = () => {
     setLoading(false);
-    // setPlaying(true);
   };
 
   const handleBuffer = () => {
@@ -417,133 +573,125 @@ useEffect(() => {
     setLoading(false);
   };
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     setFirstPlay(false);
-    setPlaying((prevPlaying) => !prevPlaying);
+    
+    if (!videoRef.current) return;
+    
+    if (videoRef.current.paused) {
+      setPlaying(true);
+      onPlayChange(true);
+      await videoRef.current.play();
+      
+      // Set up interval for tracking watch time
+      const id = setInterval(() => {
+        if (videoRef.current && setWatchTime) {
+          const currentTime = videoRef.current.currentTime;
+          setWatchTime(currentTime);
+        }
+      }, 5000);
+      setIntervalId(id);
+    } else {
+      setPlaying(false);
+      onPlayChange(false);
+      videoRef.current.pause();
+      
+      if (intervalId) {
+        clearInterval(intervalId);
+        setIntervalId(null);
+      }
+    }
+    
     setShowRestartButton(false);
   };
 
-const handleEnded = async () => {
-  setPlaying(false);
-  setShowRestartButton(true);
-  setIsVideoCompleted(true);
-  setIsCompleted(true);
-// setVideoPlaying(false)  
-
-  
-
-  try {
-      
-
-    const data = await refetchCourseProgress();
-  
-  } catch (error) {
-    console.error("Error refetching progress:", error);
-  }
-};
+  const handleEnded = async () => {
+    setPlaying(false);
+    setShowRestartButton(true);
+    setIsVideoCompleted(true);
+    setIsCompleted(true);
+    
+    try {
+      // Your refetch logic here
+    } catch (error) {
+      console.error("Error refetching progress:", error);
+    }
+  };
 
   const handleRestart = () => {
-    if (playerRef.current) {
-      playerRef.current.seekTo(0);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
       setPlaying(true);
       setShowRestartButton(false);
+      videoRef.current.play();
     }
   };
 
   const handleBackward = () => {
-    if (playerRef.current) {
-      playerRef.current.seekTo(
-        playerRef.current.getCurrentTime() - 10,
-        "seconds"
-      );
+    if (videoRef.current) {
+      const newTime = videoRef.current.currentTime - 10;
+      videoRef.current.currentTime = Math.max(0, newTime);
       setShowRestartButton(false);
     }
   };
 
-const handleSeekChange = (e) => {
-  const value = parseFloat(e.target.value);
-  const targetTime = (value / 100) * duration;
+  const handleSeekChange = (e) => {
+    const value = parseFloat(e.target.value);
+    const targetTime = (value / 100) * duration;
 
-  // If course is not active or video is completed, allow seeking anywhere
-  if (!iscourse || isVideoCompleted||firstsubmodule) {
-    setPlayed(value);
-    setShowRestartButton(false);
-    playerRef.current?.seekTo(value / 100, "fraction");
-    return;
-  }
-
-  // the maxWatchTime restriction
-  if (targetTime <= maxWatchTime) {
-    setPlayed(value);
-    setShowRestartButton(false);
-    playerRef.current?.seekTo(value / 100, "fraction");
-  }
-};
-
-const handleSeekMouseDown = () => {
-  const value = parseFloat(progressRef.current.value);
-  
-  // If course is not active or video is completed, allow seeking anywhere
-  if (!iscourse || isVideoCompleted||firstsubmodule) {
-    playerRef.current?.seekTo(value / 100, "fraction");
-    return;
-  }
-
-  // maxWatchTime restriction
-  const targetTime = (value / 100) * duration;
-  if (targetTime <= maxWatchTime) {
-    playerRef.current?.seekTo(value / 100, "fraction");
-  }
-};
-
-const handleForward = () => {
-  if (!playerRef.current) return;
-  
-  const currentTime = playerRef.current.getCurrentTime();
-  const newTime = currentTime + 10;
-
-  // If course is not active or video is completed, allow forwarding anywhere
-  if (!iscourse || isVideoCompleted || newTime <= maxWatchTime||firstsubmodule) {
-    playerRef.current.seekTo(newTime, "seconds");
-  }
-};
-
-
- const handleProgress = (state) => {
-   if (!progressRef.current) return;
-  const { played, playedSeconds, loaded } = state;
-  
-  const progressPercentage = played * 100;
-  const loadedPercentage = loaded * 100;
-
-  setPlayed(progressPercentage);
-  setCurrentTime(playedSeconds);
-
-
-  if (!isVideoCompleted && playedSeconds > maxWatchTime) {
-    setMaxWatchTime(playedSeconds);
-     
-  }
-
-  if (chapters?.length > 0) {
-    const current =
-      [...chapters].reverse().find((ch) => playedSeconds >= ch.time) ||
-      chapters[0];
-    if (current.title !== currentChapter) {
-      setCurrentChapter(current.title);
+    // If course is not active or video is completed, allow seeking anywhere
+    if (!iscourse || isVideoCompleted  || forward==false) {
+      setPlayed(value);
+      setShowRestartButton(false);
+      if (videoRef.current) {
+        videoRef.current.currentTime = targetTime;
+      }
+      return;
     }
-  }
 
-  const progressBar = progressRef.current;
-  if (progressBar) {
-    const progressColor = `linear-gradient(to right, #2C68F6 ${
-      progressPercentage + 0.1
-    }%, rgba(255,255,255,0.6) ${progressPercentage}%, rgba(255,255,255,0.6) ${loadedPercentage}%, rgba(255,255,255,0.2) ${loadedPercentage}%)`;
-    progressBar.style.background = progressColor;
-  }
-};
+    // the maxWatchTime restriction
+    if (targetTime <= maxWatchTime) {
+      setPlayed(value);
+      setShowRestartButton(false);
+      if (videoRef.current) {
+        videoRef.current.currentTime = targetTime;
+      }
+    }
+  };
+
+  const handleSeekMouseDown = () => {
+    const value = parseFloat(progressRef.current.value);
+    
+    // If course is not active or video is completed, allow seeking anywhere
+    if (!iscourse || isVideoCompleted  || forward==false) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = (value / 100) * duration;
+      }
+      return;
+    }
+
+    // maxWatchTime restriction
+    const targetTime = (value / 100) * duration;
+    if (targetTime <= maxWatchTime && videoRef.current) {
+      videoRef.current.currentTime = targetTime;
+    }
+  };
+
+  const handleForward = () => {
+    if (!videoRef.current) return;
+    
+    const currentTime = videoRef.current.currentTime;
+    const newTime = currentTime + 10;
+
+    // If course is not active or video is completed, allow forwarding anywhere
+    if (!iscourse || isVideoCompleted || newTime <= maxWatchTime || forward==false) {
+      videoRef.current.currentTime = newTime;
+    }
+  };
 
   const handleProgressHover = (e) => {
+    if (!progressRef.current) return;
+    
     const barWidth = progressRef.current.getBoundingClientRect().width;
     const mouseX = e.clientX - progressRef.current.getBoundingClientRect().left;
     const hoverTime = (mouseX / barWidth) * duration;
@@ -564,10 +712,6 @@ const handleForward = () => {
     }
   };
 
-  const handleDuration = (duration) => {
-    setDuration(duration);
-  };
-
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -577,6 +721,10 @@ const handleForward = () => {
   const handleVolumeChange = (e) => {
     const value = parseFloat(e.target.value);
     setVolume(value);
+    
+    if (videoRef.current) {
+      videoRef.current.volume = value;
+    }
 
     const volumeTrack = document.querySelector(".volume-track");
     if (volumeTrack) {
@@ -588,8 +736,14 @@ const handleForward = () => {
   const handleMute = () => {
     if (volume === 0) {
       setVolume(1);
+      if (videoRef.current) {
+        videoRef.current.volume = 1;
+      }
     } else {
       setVolume(0);
+      if (videoRef.current) {
+        videoRef.current.volume = 0;
+      }
     }
   };
 
@@ -628,38 +782,32 @@ const handleForward = () => {
 
   const handleSpeedChange = (speed) => {
     setPlaybackSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
     toggleSettings();
   };
 
-  // const handleError = (error) => {
-  //   console.error("An error occurred while loading the video:", error);
-  //   toast.error("An error occurred while loading the video");
-  // };
-const handleVideoPlayerInteraction = () => {
-
- 
+  const handleVideoPlayerInteraction = () => {
     onPlayChange(true); 
-  
-};
+  };
+
   const handleQualityChange = (quality) => {
-    // if (quality === 360) {
-    //   setSelectedQuality("Auto");
-    // } else {
-    //   setSelectedQuality(quality);
-    // }
     setSelectedQuality(quality);
-
     const newSrc = `${cdnDomain}/${source}/${quality}p.m3u8`;
+    
     if (newSrc !== src) {
-      const currentTime = playerRef.current.getCurrentTime();
-      setPlaying(true);
+      const currentTime = videoRef.current ? videoRef.current.currentTime : 0;
       setSrc(newSrc);
-
-      setTimeout(() => {
-        if (playerRef.current) {
-          playerRef.current.seekTo(currentTime);
-        }
-      }, 500);
+      
+      // Reload the source with Shaka Player
+      if (playerRef.current) {
+        loadSource(playerRef.current, newSrc).then(() => {
+          if (videoRef.current) {
+            videoRef.current.currentTime = currentTime;
+          }
+        });
+      }
     }
     toggleSettings();
   };
@@ -748,21 +896,13 @@ const handleVideoPlayerInteraction = () => {
     );
   };
 
-  function mergeRefs(...refs) {
-    return (element) => {
-      refs.forEach((ref) => {
-        if (typeof ref === "function") {
-          ref(element);
-        } else if (ref != null) {
-          ref.current = element;
-        }
-      });
-    };
+  if (!isClient) {
+    return null;
   }
 
   return (
     <div
-      className={`video-container  ${
+      className={`video-container rounded-xl ${
         playing ? "playing" : "paused"
       } !z-0 !${className}`}
       ref={containerRef}
@@ -775,7 +915,7 @@ const handleVideoPlayerInteraction = () => {
       onTouchStart={() => {
         containerRef.current.classList.add("show-controls");
         setShowControls(true);
-          handleVideoPlayerInteraction();
+        handleVideoPlayerInteraction();
 
         if (timeoutId.current) {
           clearTimeout(timeoutId.current);
@@ -792,109 +932,55 @@ const handleVideoPlayerInteraction = () => {
       ) : null}
 
       <div className="video-player">
-        <ReactPlayer
+        <video
+          ref={videoRef}
           className="react-player"
-          ref={mergeRefs(playerRef, chapterRef)}
-          // ref={playerRef || chapterRef}
-          url={src}
-          playing={playing}
-          controls={false}
+          poster={poster}
+          playsInline
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+          onClick={handlePlayPause}
+        />
         
-          width="100%"
-          height="100%"
-          playbackRate={playbackSpeed}
-          volume={volume}
-          // light={false}
-             playIcon={<div className="absolute"   style={{
-            
-                zIndex: 199,height:60,width:60,
-              
-              }}>{playIcon} </div>}
-          light={
-            <div
-              className="flex justify-center items-center thumbnail-container"
-              style={{
-                height: "100%",
-                width: "100%",
-                zIndex: 99,
-                background: "rgba(0,0,0)",
-                position: "relative",
-              }}
-            >
-              <div className="thumbnail-wrapper" style={{ position: "relative", width: "100%", height: "100%" }}>
-                <Image
-                  src={imgSrc}
-                  alt="Thumbnail"
-                  
-                  style={{
-                    objectFit: "cover",
-                    width: "100%",
-                    height: "100%",
-                  }}
-                  className="thumbnail-image"
-                  onClick={() => {
-                    setLoading(true);
-                    setPreloaded(true);
-                  }}
-                />
+        {firstPlay && (
+          <div
+            className="flex justify-center items-center thumbnail-container"
+            style={{
+              height: "100%",
+              width: "100%",
+              zIndex: 99,
+              background: "rgba(0,0,0)",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              setLoading(true);
+              setPreloaded(true);
+              handlePlayPause();
+            }}
+          >
+            <div className="thumbnail-wrapper" style={{ position: "relative", width: "100%", height: "100%" }}>
+              <Image
+                src={imgSrc}
+                alt="Thumbnail"
+                style={{
+                  objectFit: "cover",
+                  width: "100%",
+                  height: "100%",
+                }}
+                className="thumbnail-image"
+              />
+              <div className="absolute inset-0 flex items-center justify-center ">
+                {playIcon }
               </div>
             </div>
-          }
-          // onReady={()=>setPlaying(true)}
-          playsinline={true}
-          onClickPreview={() => {
-            if (!playing) {
-              setLoading(true);
-              handlePlayPause();
-            }
-          }}
-          // onStart={() => setPlaying(true)}
-          onStart={() => {
-            setPlaying(true);
-            if (playerRef.current) {
-              playerRef.current.seekTo(lastPositon, "seconds");
-            }
-          }}
-          onProgress={handleProgress}
-          onDuration={handleDuration}
-          onEnded={handleEnded}
-          onBuffer={handleBuffer}
-          // onError={handleError}
-          onBufferEnd={handleBufferEnd}
-          onPlay={() => {
-
-          
-            setPlaying(true);
-             onPlayChange(true); 
-            
-
-            const id = setInterval(() => {
-              if (playerRef.current && setWatchTime) {
-                const currentTime = playerRef.current.getCurrentTime();
-               setWatchTime(currentTime);
-               
-              }
-            }, 5000); //Todo:  need to change in 1 minutes
-            setIntervalId(id);
-          
-          }}
-          onPause={() => {
-            setPlaying(false);
-            onPlayChange(false); 
-            if (intervalId) {
-              clearInterval(intervalId);
-              setIntervalId(null);
-            }
-          }}
-          config={{
-            hls: {
-              forceHLS: true,
-            },
-            // dash: {
-            //   forceDASH: true
-            // },
-          }}
-        />
+          </div>
+        )}
       </div>
 
       {!firstPlay && (
@@ -925,16 +1011,15 @@ const handleVideoPlayerInteraction = () => {
                 onClick={handlePlayPause}
               />
             )}
-         <GrForwardTen
-  className={`control-icons ${
-    playerRef.current &&
-     isVideoCompleted || (duration && (played / 100) * duration <= maxWatchTime|| iscourse==false)
-      ? "cursor-pointer"
-      : "cursor-not-allowed"
-  }`}
-  onClick={handleForward}
-/>
-
+            <GrForwardTen
+              className={`control-icons ${
+                videoRef.current &&
+                (isVideoCompleted || (duration && (played / 100) * duration <= maxWatchTime || iscourse==false))
+                  ? "cursor-pointer"
+                  : "cursor-not-allowed"
+              }`}
+              onClick={handleForward}
+            />
           </div>
 
           <div className="bottom-controls">
@@ -953,7 +1038,6 @@ const handleVideoPlayerInteraction = () => {
                   </div>
                 )
               }
-
             </div>
 
             <div
@@ -967,19 +1051,17 @@ const handleVideoPlayerInteraction = () => {
                 </div>
               )}
 
-<input
-  type="range"
- className="track-range cursor-pointer" // Always show pointer cursor
-  ref={progressRef}
-  min={0}
-  max={100}
-  value={played}
-  step="any"
-  onChange={handleSeekChange}
-  onMouseDown={handleSeekMouseDown}
-/>
-
-
+              <input
+                type="range"
+                className="track-range cursor-pointer"
+                ref={progressRef}
+                min={0}
+                max={100}
+                value={played}
+                step="any"
+                onChange={handleSeekChange}
+                onMouseDown={handleSeekMouseDown}
+              />
             </div>
 
             <div className="flex">

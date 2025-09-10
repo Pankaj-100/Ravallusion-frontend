@@ -20,7 +20,8 @@ import { setCourseId, setFirstVideoId, setCourseType } from "@/store/slice/gener
 import { setCourse } from "@/store/slice/course";
 import Progresscard from "../dashboard/Progresscard";
 import { useRouter } from "next/navigation";
-
+import RecommandVideo from "./RecommandVideo";
+import { useGetSubscriptionDetailQuery } from "@/store/Api/course";
 const PlayerSidebar = () => {
   const [beginnerPlanId, setBeginnerPlanId] = useState(null);
   const [advancedPlanId, setAdvancedPlanId] = useState(null);
@@ -31,6 +32,8 @@ const PlayerSidebar = () => {
   const dispatch = useDispatch();
   const path = usePathname();
 
+  const { data: plantype } = useGetSubscriptionDetailQuery();
+  const planType = plantype?.data?.subscriptionDetails?.planType;
   const { data: plansData } = useGetPlanDataQuery();
   const { data } = useGetBookmarkQuery();
   const { data: introductoryData } = useGetIntroductoryQuery();
@@ -91,11 +94,11 @@ const PlayerSidebar = () => {
       // Set first video ID based on tool type
       if (tooltype === "photoshop") {
         const firstVideoId = advancedCourse?.modules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
-         console.log(" adv photoshop----------",firstVideoId)
+       
         if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
       } else if (tooltype === "premier-pro") {
         const firstVideoId = advancedCourse?.modules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
-         console.log(" adv [remium pro]----------",firstVideoId)
+      
         if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
       }
     }
@@ -151,6 +154,7 @@ const PlayerSidebar = () => {
                 setPlayingVideoId={setPlayingVideoId}
               />
             )}
+           {courseType==="beginner"&& planType==="Beginner"?<RecommandVideo /> : ""}
             <Progresscard />
           </>
         )}

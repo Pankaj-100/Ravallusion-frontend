@@ -166,7 +166,7 @@ const VideoDescription = ({
   if (!isClient) return null;
 
   return (
-    <div className="text-white ms-6">
+    <div className="text-white ms-1">
       <div className="flex justify-between my-2">
         <h1 className="text-lg font-semibold">{title}</h1>
         {title && !isBookmarked && (

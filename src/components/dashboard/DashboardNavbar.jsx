@@ -112,7 +112,12 @@ const DashboardNavbar = () => {
             {urlpath === "playerDashboard" && (
               <>
                 {/* <h1 className="text-lg font-semibold mb-1">Opening file</h1> */}
-                <p className="text-lg font-bold text-[#CDCED1]">{videoTitle}</p>
+   <p
+  className="text-lg font-bold text-[#CDCED1] line-clamp-2 max-w-[90vw] lg:max-w-full"
+>
+  {videoTitle}
+</p>
+
               </>
             )}
 

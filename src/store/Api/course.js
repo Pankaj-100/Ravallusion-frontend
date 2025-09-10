@@ -52,9 +52,12 @@ export const courseApi = createApi({
         verifyCertificate: builder.query({
             query: (id) => `user-certificate/verify/${id}`,
         }),
+        getRecommendedVideos: builder.query({
+  query: (courseId) => `recommended-videos/public/course/${courseId}`,
+}),
         
     }),
 })
 
 export const {useGetAlreadyAssignmentSubmittedQuery,useGetSearchedVideosQuery,useLazyGetSearchedVideosQuery,useGetSubmittedAssignmetQuery, useGetSubscribedPlanCourseQuery,
-    useGetSubscriptionDetailQuery, useAssignmentSubmitMutation, useUploadFileMutation, useVerifyCertificateQuery } = courseApi;
+    useGetSubscriptionDetailQuery, useAssignmentSubmitMutation, useUploadFileMutation, useVerifyCertificateQuery ,useGetRecommendedVideosQuery,} = courseApi;

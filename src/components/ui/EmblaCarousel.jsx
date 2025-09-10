@@ -1,8 +1,11 @@
 "use client";
-
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import { NextButton, PrevButton, usePrevNextButtons } from "./EmblaCarouselArrowButtons";
+import {
+  NextButton,
+  PrevButton,
+  usePrevNextButtons,
+} from "./EmblaCarouselArrowButtons";
 import VideoPlayer from "../dashboard/VideoPlayer";
 import Autoplay from "embla-carousel-autoplay";
 import CustomPlayButton from "./customPlay";
@@ -12,41 +15,32 @@ const TWEEN_FACTOR_BASE = 0.52;
 const numberWithinRange = (number, min, max) =>
   Math.min(Math.max(number, min), max);
 
-const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange, forceRefresh }) => {
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  useEffect(() => {
-    if (forceRefresh) {
-      setRefreshKey(prev => prev + 1);
-    }
-  }, [forceRefresh]);
-
+const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange }) => {
   useEffect(() => {
     const videoRef = videoRefs.current[index];
     if (!videoRef) return;
 
     if (!isActive) {
       if (videoRef.pause) videoRef.pause();
-      if (videoRef.seekTo) videoRef.seekTo(0); 
+      if (videoRef.seekTo) videoRef.seekTo(0);
     } else {
       if (videoRef.pause) videoRef.pause();
     }
-  }, [isActive, index]);
+  }, [isActive, index, videoRefs]);
 
   return (
     <div className="flex items-center justify-center">
       <div className="relative w-full h-fit self-center">
         <div className="p-3 carousel-bg h-96">
           <VideoPlayer
-            key={`video-${index}-${refreshKey}`} // Force re-render when refreshKey changes
             source={item.video.videoUrl}
             poster={item.video.thumbnailUrl}
             ref={(el) => {
               videoRefs.current[index] = el;
             }}
-            autoPlay={false} 
+            autoPlay={false}
             iscourse={false}
-            onPlayChange={onPlayChange}  
+            onPlayChange={onPlayChange}
             playIcon={<CustomPlayButton />}
           />
         </div>
@@ -58,7 +52,7 @@ const CarouselCard = ({ item, isActive, videoRefs, index, onPlayChange, forceRef
 const EmblaCarousel = ({ slides, options }) => {
   const autoplay = useRef(
     Autoplay(
-      { delay: 4000, stopOnInteraction: false }, 
+      { delay: 4000, stopOnInteraction: false },
       (emblaRoot) => emblaRoot.parentElement
     )
   );
@@ -70,20 +64,42 @@ const EmblaCarousel = ({ slides, options }) => {
   const tweenFactor = useRef(0);
   const tweenNodes = useRef([]);
   const videoRefs = useRef([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [forceRefreshIndices, setForceRefreshIndices] = useState({});
+  const carouselContainerRef = useRef(null);
 
-  // Initialize videoRefs with the correct length
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // 👈 used to force refresh
+
   useEffect(() => {
-    videoRefs.current = Array(slides.length).fill(null);
+    videoRefs.current = Array(slides?.length).fill(null);
   }, [slides?.length]);
 
-  const { prevBtnDisabled, nextBtnDisabled, onPrevButtonClick, onNextButtonClick } = usePrevNextButtons(emblaApi);
+  // 👇 Intersection Observer to refresh carousel when not visible
+  useEffect(() => {
+    if (!carouselContainerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries[0].isIntersecting;
+        if (!isVisible) {
+          setRefreshKey((prev) => prev + 1); // 🔄 force remount carousel
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(carouselContainerRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const { prevBtnDisabled, nextBtnDisabled, onPrevButtonClick, onNextButtonClick } =
+    usePrevNextButtons(emblaApi);
 
   const setTweenNodes = useCallback((emblaApi) => {
-    tweenNodes.current = emblaApi.slideNodes().map(slideNode =>
-      slideNode.querySelector(".embla__slide__number")
-    );
+    tweenNodes.current = emblaApi
+      .slideNodes()
+      .map((slideNode) => slideNode.querySelector(".embla__slide__number"));
   }, []);
 
   const setTweenFactor = useCallback((emblaApi) => {
@@ -109,7 +125,10 @@ const EmblaCarousel = ({ slides, options }) => {
             const sign = Math.sign(target);
 
             if (slideIndex === loopItem.index && target !== 0) {
-              diffToTarget = sign === -1 ? scrollSnap - (1 + scrollProgress) : scrollSnap + (1 - scrollProgress);
+              diffToTarget =
+                sign === -1
+                  ? scrollSnap - (1 + scrollProgress)
+                  : scrollSnap + (1 - scrollProgress);
             }
           });
         }
@@ -122,35 +141,33 @@ const EmblaCarousel = ({ slides, options }) => {
     });
   }, []);
 
-  const handleVideoPlayChange = useCallback((isPlaying) => {
-    if (!emblaApi || !autoplay.current) return;
-console.log("Video play state changed:", isPlaying);
-    if (isPlaying) {
-      autoplay.current.stop();     // Stop carousel autoplay
-    } else {
-      autoplay.current.reset();    // Resume carousel autoplay
-    }
-  }, [emblaApi]);
+  const handleVideoPlayChange = useCallback(
+    (isPlaying) => {
+      if (!emblaApi || !autoplay.current) return;
+      if (isPlaying) {
+        autoplay.current.stop();
+      } else {
+        autoplay.current.reset();
+      }
+    },
+    [emblaApi]
+  );
 
-  const handleSlideChange = useCallback((emblaApi) => {
-    if (!emblaApi) return;
+  const handleSlideChange = useCallback(
+    (emblaApi) => {
+      if (!emblaApi) return;
 
-    const currentIndex = emblaApi.selectedScrollSnap();
-    setActiveIndex(currentIndex);
+      const currentIndex = emblaApi.selectedScrollSnap();
+      setActiveIndex(currentIndex);
 
-    // Ensure the new active video is paused at start
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      if (currentVideoRef.pause) currentVideoRef.pause();
-      if (currentVideoRef.seekTo) currentVideoRef.seekTo(0);
-    }
-
-    // Force refresh of the slide that's coming into view
-    setForceRefreshIndices(prev => ({
-      ...prev,
-      [currentIndex]: prev[currentIndex] ? prev[currentIndex] + 1 : 1
-    }));
-  }, []);
+      const currentVideoRef = videoRefs.current[currentIndex];
+      if (currentVideoRef) {
+        if (currentVideoRef.pause) currentVideoRef.pause();
+        if (currentVideoRef.seekTo) currentVideoRef.seekTo(0);
+      }
+    },
+    [videoRefs]
+  );
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -161,11 +178,11 @@ console.log("Video play state changed:", isPlaying);
     handleSlideChange(emblaApi);
 
     const events = ["reInit", "scroll", "slideFocus", "select"];
-    events.forEach(event => emblaApi.on(event, tweenScale));
+    events.forEach((event) => emblaApi.on(event, tweenScale));
     emblaApi.on("select", handleSlideChange);
 
     return () => {
-      events.forEach(event => emblaApi.off(event, tweenScale));
+      events.forEach((event) => emblaApi.off(event, tweenScale));
       emblaApi.off("select", handleSlideChange);
     };
   }, [emblaApi, tweenScale, setTweenNodes, setTweenFactor, handleSlideChange]);
@@ -185,7 +202,8 @@ console.log("Video play state changed:", isPlaying);
   }, [onNextButtonClick, activeIndex]);
 
   return (
-    <div className="embla relative">
+    <div key={refreshKey} className="embla relative" ref={carouselContainerRef}>
+      {/* 👆 key={refreshKey} forces remount on refresh */}
       <div className="embla__viewport" ref={emblaRef}>
         <div className="embla__container">
           {slides?.map((item, index) => (
@@ -197,7 +215,6 @@ console.log("Video play state changed:", isPlaying);
                   index={index}
                   item={item}
                   onPlayChange={handleVideoPlayChange}
-                  forceRefresh={forceRefreshIndices[index]}
                 />
               </div>
             </div>

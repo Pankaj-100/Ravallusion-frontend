@@ -5,7 +5,7 @@ const CarouselWrapper = ({
   navigation = false,
   showDots = false,
   children,
-  autoScrollInterval = 3000,
+  autoScrollInterval = 4000,
   className = "",
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);

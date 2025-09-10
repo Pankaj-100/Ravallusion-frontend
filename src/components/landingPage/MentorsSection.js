@@ -81,34 +81,30 @@ const MentorsSection = ({ mentor }) => {
     <Vinod />
   </div>
 
-  <div
-    className="
-      absolute 
-      w-[100vw] 
-      left-0 
-      sm:w-[140vw] sm:-left-[60vw] 
-      md:w-[140vw] md:-left-[65%] 
-      lg:w-[62rem] lg:-left-[27rem] 
-      xl:w-[60rem] xl:-left-[23rem] 
-      2xl:!w-[60rem] 2xl:!-left-[21rem]
+ <div
+  className="
+    absolute
+    bottom-0
+    left-1/2
+    -translate-x-1/2
+    w-[100vw]
+    h-[28rem]
 
-      h-[28rem] 
-      sm:h-[31rem] 
-      md:h-[41rem] 
-      xl:h-[36rem] 
-      2xl:h-[34rem]
+    sm:w-[160vw] sm:h-[31rem]
+    md:w-[160vw] md:h-[41rem]
+    lg:w-[62rem] lg:h-full lg:left-[-27rem] lg:translate-x-0
+    xl:w-[60rem] xl:h-[36rem] xl:left-[-23rem] xl:translate-x-0
+    2xl:!w-[60rem] 2xl:!h-[34rem] 2xl:!-left-[21rem] 2xl:translate-x-0
+  "
+>
+  <Image
+    src="/vinod.png"
+    fill
+    alt="Vinod"
+    className="object-fit"
+  />
+</div>
 
-      bottom-0 
-      !right-0
-    "
-  >
-    <Image
-      src="/vinod.png"
-      fill
-      alt="Vinod"
-      className="object-contain"
-    />
-  </div>
 </div>
 </div>
 

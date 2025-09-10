@@ -10,7 +10,7 @@ export default function CustomPlayButton() {
         src={customPlayImage}
         alt="Play"
       
-        className="custom-play-icon"
+        className="custom-play-icon h-16 w-16"
       />
     </div>
   );

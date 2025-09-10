@@ -3,6 +3,7 @@ import PersonalInfoCard from '@/components/dashboard/PersonalInfoCard'
 import BookmarkVideos from '@/components/profile/BookmarkVideos'
 import MobileProfileHeader, { MobileProfileSidebar } from '@/components/profile/MobileProfileSidebar'
 import MyAssignment from '@/components/profile/MyAssignment'
+import MyLearning from '@/components/profile/MyLearning'
 import MySubscription from '@/components/profile/MySubscription'
 import ProfileSidebar from '@/components/profile/ProfileSidebar'
 import Settings from '@/components/profile/Settings'
@@ -40,6 +41,10 @@ const Page = () => {
                 {
                     activeItem === "My Assignments" &&
                     <MyAssignment />
+                }
+                   {
+                    activeItem === "My Learnings" &&
+                    <MyLearning />
                 }
                 {
                     activeItem === "Bookmarked Videos" &&

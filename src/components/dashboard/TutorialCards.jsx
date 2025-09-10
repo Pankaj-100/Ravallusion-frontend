@@ -34,8 +34,8 @@ const TutorialCards = ({ title, subItems }) => {
                 ref={carouselRef}
                 className='flex overflow-x-auto h-60  ms-1 space-x-9  md:px-4 scrollbar-hide snap-x snap-mandatory scroll-smooth'
             >
-                {subItems.length > 0 && subItems.map((items) => (
-                    <div key={items._id} className='flex-shrink-0 w-[300px] h-[180px] snap-center my-4 mx-auto'>
+                {subItems?.length > 0 && subItems.map((items) => (
+                    <div key={items._id} className='flex-shrink-0 w-[340px] h-[200px] mt-8 snap-center my-4 mx-auto'>
                         <VideoCard
                             videoId={items._id}
                             img={items.thumbnailUrl}
@@ -75,7 +75,7 @@ if(level==2){
         >
             <motion.div onClick={fetchVideo}
                 whileTap={{ scale: 0.95 }}
-                className='relative h-[130px]'>
+                className='relative h-[160px]'>
                 <Image src={img} alt='video thumbnail' fill style={{ objectFit: "cover" }} />
                 <span className='absolute top-2 right-2 rounded-lg px-3 py-1 video-timeline-bg text-xs text-white'>{duration}</span>
             </motion.div>

@@ -20,6 +20,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setVideos, updateVideo } from "@/store/slice/course";
 import { useGetSubscriptionDetailQuery } from "@/store/Api/course";
+import { Premium } from "@/lib/svg_icons";
 
 const VideoDashboard = () => {
   const searchParams = useSearchParams();
@@ -38,11 +39,10 @@ const VideoDashboard = () => {
   const { data: plantype } = useGetSubscriptionDetailQuery();
   const planType = plantype?.data?.subscriptionDetails?.planType;
 
-  console.log("planType", planType);
-  console.log("videoLevel", videoLevel);
-
   const [videoUrl, setVideoUrl] = useState(null);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [forward, setForward] = useState(null);
+
   const [showTimeStamp, setShowTimeStamp] = useState(false);
   const [watchTime, setWatchTime] = useState(0);
   const [status, setStatus] = useState(true);
@@ -67,7 +67,6 @@ const VideoDashboard = () => {
   const { data, isLoading } = useGetVideoQuery(videoId, {
     skip: !videoId,
   });
-  console.log("Fetched video data:", data);
 
   // Redirect to last watched or first video if videoId not present
   useEffect(() => {
@@ -84,7 +83,7 @@ const VideoDashboard = () => {
   useEffect(() => {
     if (data?.data?.video) {
       setVideoUrl(data.data.video.videoUrl);
-      console.log("Video URL:", data.data.video.videoUrl);
+      setForward(data.data.video.disableForward);
       setThumbnailUrl(data.data.video.thumbnailUrl);
     }
   }, [data]);
@@ -106,21 +105,40 @@ const VideoDashboard = () => {
     }
   }, [videoId, sidebarTabIndex]);
 
-  // Update progress every 2s
+  // ⏱ Update progress every 10s (stable interval + latest value via ref)
   const [updateProgress] = useUpdateVideoProgressMutation();
+
+  const watchTimeRef = useRef(0);
   useEffect(() => {
-    const progressUpdate = async () => {
-      if (watchTime && videoId) {
-        const res = await updateProgress({ id: videoId, watchTime }).unwrap();
-        dispatch(
-          setUpdatedPercentageWatched(res?.videoProgress?.percentageWatched)
-        );
-        dispatch(setVideoIdOfcurrentVideo(videoId));
-        dispatch(updateVideo(res.videoProgress));
-      }
-    };
-    progressUpdate();
+    watchTimeRef.current = watchTime; // always keep the latest value
   }, [watchTime]);
+
+  const flushProgress = React.useCallback(async () => {
+    const wt = Math.floor(watchTimeRef.current || 0);
+    if (!videoId || wt <= 0) return;
+    try {
+      const res = await updateProgress({ id: videoId, watchTime: wt }).unwrap();
+      dispatch(setUpdatedPercentageWatched(res?.videoProgress?.percentageWatched));
+      dispatch(setVideoIdOfcurrentVideo(videoId));
+      dispatch(updateVideo(res.videoProgress));
+    } catch (e) {
+      console.error("Error updating progress:", e);
+    }
+  }, [videoId, updateProgress, dispatch]);
+
+  useEffect(() => {
+    if (!videoId) return;
+
+    const id = setInterval(() => {
+      flushProgress(); // sends latest watchTime every 10s
+    }, 10000);
+
+    // also send one final update when switching videos/unmounting
+    return () => {
+      clearInterval(id);
+      flushProgress();
+    };
+  }, [videoId, flushProgress]);
 
   useEffect(() => {
     if (courseProgress) {
@@ -130,7 +148,6 @@ const VideoDashboard = () => {
       dispatch(setVideoTitle(data?.data?.video?.title));
     }
   }, [courseProgress, data]);
-  
 
   useEffect(() => {
     setIsCompleted(false);
@@ -142,101 +159,143 @@ const VideoDashboard = () => {
     }
   }, [courseProgress, videoId]);
 
+  const handleUpgrade = () => {
+    router.push('/Upgrade-plan');
+  };
+
   // Force video player to remount when videoUrl changes
   const videoPlayerKey = videoUrl || "no-video";
 
   return (
     <div className="lg:mt-2 flex lg:flex-row flex-col ">
-      <div className="lg:mr-4 xl:mr-4 w-full lg:w-[52%] lg:ms-10">
-<div className="relative w-full aspect-video rounded-md bg-black">   
-      {isLoading || courseProgressLoading ? (
-  // ⏳ While fetching course/video data
-  <SimpleLoader />
-) : planType === "Beginner" && videoLevel === 2 ? (
-  // 🚫 Upgrade plan message (higher priority)
-  <div className="absolute inset-0 flex items-center justify-center px-4">
-    <div className="bg-white max-w-md w-full p-6 rounded-2xl shadow-xl border border-red-200 text-center animate-in fade-in zoom-in duration-300">
-      <div className="flex justify-center mb-4">
-        <svg
-          className="w-14 h-14 text-red-500"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
-        Upgrade to Advance Plan
-      </h2>
-      <p className="text-md text-gray-600 mb-4">
-        This video is part of the{" "}
-        <span className="font-medium text-red-500">Advanced Course</span>{" "}
-        and isn&apos;t available in your current subscription.
-      </p>
-    </div>
-  </div>
-) : isLocked ? (
-  // 🚫 Locked video message
-  <div className="absolute inset-0 flex items-center justify-center px-4">
-    <div className="bg-white max-w-md w-full p-6 rounded-2xl shadow-xl border border-yellow-300 text-center animate-in fade-in zoom-in duration-300">
-      <div className="flex justify-center mb-4">
-        <svg
-          className="w-14 h-14 text-yellow-500"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-2">
-        Video Locked
-      </h2>
-      <p className="text-md text-gray-600 mb-4">
-        Please{" "}
-        <span className="font-medium text-yellow-600">
-          watch the previous video
-        </span>{" "}
-        to unlock this one.
-      </p>
-    </div>
-  </div>
-) : videoUrl ? (
-  // 🎥 Play video when available
-  <VideoPlayer
-    videoId={videoId || firstVideoId}
-    key={videoPlayerKey}
-    courseProgress={courseProgress}
-    source={videoUrl}
-    poster={thumbnailUrl}
-    setWatchTime={setWatchTime}
-    watchTime={watchTime}
-    setShowTimeStamp={setShowTimeStamp}
-    showTimeStamp={showTimeStamp}
-    chapterRef={chapterRef}
-    chapters={data?.data?.timestamps}
-    iscourse={status}
-    isCompleted={isCompleted}
-     setIsCompleted={setIsCompleted}
-  />
-) : (
-  <></>
-)}
+      <div className="lg:mr-4 xl:mr-4  lg:w-[50%] w-full lg:ms-20">
+        <div className="relative w-full aspect-video  bg-black rounded-xl ">   
+          {isLoading || courseProgressLoading ? (
+            // ⏳ While fetching course/video data
+            <SimpleLoader />
+          ) : planType === "Beginner" && videoLevel === 2 ? (
+            // 🚫 Upgrade plan message (higher priority) - Updated design
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div 
+                className="relative rounded-[16px] border border-transparent w-full max-w-md"
+                style={{
+                  background: 
+                    "linear-gradient(0deg, #192029, #192029), " +
+                    "linear-gradient(291.43deg, rgba(0,0,0,0) 45.59%, rgba(133,116,246,0.35) 96.1%)",
+                  backgroundOrigin: "border-box",
+                  backgroundClip: "padding-box, border-box",
+                  boxShadow:
+                    "inset 2px 4px 11.9px 0px rgba(255,255,255,0.10), " +
+                    "inset -4px -2px 10.1px 0px rgba(255,255,255,0.10)",
+                  backdropFilter: "blur(25.2px)",
+                }}
+              >
+                {/* Border gradient overlay */}
+                <div
+                  className="absolute inset-0 rounded-[16px] p-px -z-10"
+                  style={{
+                    background: "linear-gradient(92.36deg, rgba(255,255,255,0.25) 2.51%, rgba(255,255,255,0) 48.45%)",
+                    mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    maskComposite: "exclude",
+                    WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    WebkitMaskComposite: "xor",
+                  }}
+                />
+                
+                {/* Content container */}
+                <div className="p-[30px] relative z-10">
+                  {/* Content */}
+                  <div className="flex flex-col gap-[30px]">
+                      <div className="flex-shrink-0 mt-1">
+                        <Premium />
+                      </div>
+                    {/* Heading section */}
+                    <div className="flex items-start gap-4">
+                    
+                      <div>
+                        <h3 className="text-[24px] leading-[32px] font-semibold text-white tracking-[-0.01em]">
+                          Upgrade your subscription plan
+                        </h3>
+                        <p className="text-[14px] leading-[20px] text-white/70 mt-1.5">
+               This is applicable only for beginner plan users
+                        </p>
+                      </div>
+                    </div>
 
+                    {/* CTA Button */}
+                    <button
+                      onClick={handleUpgrade}
+                      className="w-full h-14 rounded-xl font-semibold text-white text-[16px] relative overflow-hidden"
+                      style={{
+                        background: "linear-gradient(90deg, #6E6CF6 0%, #9A8CF6 100%)",
+                        boxShadow: "inset 0px 1px 0px rgba(255, 255, 255, 0.25)",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      Upgrade plan
+                      {/* Subtle shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : isLocked ? (
+            // 🚫 Locked video message
+            <div className="absolute inset-0 flex items-center justify-center px-4">
+              <div className="bg-white max-w-md w-full p-6 rounded-2xl shadow-xl border border-yellow-300 text-center animate-in fade-in zoom-in duration-300">
+                <div className="flex justify-center mb-4">
+                  <svg
+                    className="w-14 h-14 text-yellow-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                  Video Locked
+                </h2>
+                <p className="text-md text-gray-600 mb-4">
+                  Please{" "}
+                  <span className="font-medium text-yellow-600">
+                    watch the previous video
+                  </span>{" "}
+                  to unlock this one.
+                </p>
+              </div>
+            </div>
+          ) : videoUrl ? (
+            // 🎥 Play video when available
+            <VideoPlayer
+              videoId={videoId || firstVideoId}
+              key={videoPlayerKey}
+              courseProgress={courseProgress}
+              source={videoUrl}
+              poster={thumbnailUrl}
+              forward={forward}
+              setWatchTime={setWatchTime}
+              watchTime={watchTime}
+              setShowTimeStamp={setShowTimeStamp}
+              showTimeStamp={showTimeStamp}
+              chapterRef={chapterRef}
+              chapters={data?.data?.timestamps}
+              iscourse={status}
+              isCompleted={isCompleted}
+              setIsCompleted={setIsCompleted}
+            />
+          ) : (
+            <></>
+          )}
         </div>
 
-        <div className="my-[10px] px-4 lg:px-0">
+        <div className="my-[10px]  lg:px-0 ">
           <VideoDescription
             chapterRef={chapterRef}
             showTimeStamp={showTimeStamp}
@@ -247,12 +306,12 @@ const VideoDashboard = () => {
             description={data?.data?.video?.description}
             chapters={data?.data?.timestamps}
             isCompleted={isCompleted}
-             setIsCompleted={setIsCompleted}
+            setIsCompleted={setIsCompleted}
           />
         </div>
       </div>
 
-      <div className="lg:my-0 lg:w-[33%] px-4 lg:px-0 mt-8 lg:mt-0 rounded-md lg:ms-[90px]">
+      <div className="lg:my-0 lg:w-[33%] px-4 lg:px-0 mt-8 lg:mt-0 rounded-md lg:ms-[80px]">
         <PlayerSidebar />
       </div>
     </div>

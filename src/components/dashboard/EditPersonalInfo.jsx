@@ -1,23 +1,27 @@
-import { X } from 'lucide-react';
-import React, { useState } from 'react';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
-import { toast } from 'react-toastify';
+import { X } from "lucide-react";
+import React, { useState } from "react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { toast } from "react-toastify";
 
-const EditInfo = ({ label, content, onClick, onSave, type = 'text', isLoading }) => {
-  const isPhoneNumber = label.toLowerCase().includes('phone');
+const EditInfo = ({ label, content, onClick, onSave, type = "text", isLoading }) => {
+  const isPhoneNumber = label.toLowerCase().includes("phone");
+  const isNameField = label.toLowerCase() === "name";
+
   const [inputValue, setInputValue] = useState(
-    isPhoneNumber ? content?.slice(-10) || '' : content
+    isPhoneNumber ? content?.slice(-10) || "" : content
   );
   const [countryCode, setCountryCode] = useState(
-    isPhoneNumber ? content?.replace(/[^+0-9]/g, '').slice(0, content.length - 10) || '+91' : ''
+    isPhoneNumber
+      ? content?.replace(/[^+0-9]/g, "").slice(0, content.length - 10) || "+91"
+      : ""
   );
 
   const handleSave = () => {
     if (isPhoneNumber) {
       const phoneRegex = /^[0-9]{10}$/;
       if (!phoneRegex.test(inputValue)) {
-        toast.error('Enter a valid 10-digit phone number');
+        toast.error("Enter a valid 10-digit phone number");
         return;
       }
 
@@ -37,18 +41,26 @@ const EditInfo = ({ label, content, onClick, onSave, type = 'text', isLoading })
           backdropFilter: "blur(104.0999984741211px)",
         }}
       >
-        <div className="flex items-center justify-between mb-7">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
           <h1 className="text-lg">Enter details</h1>
+          
           <div className="cursor-pointer" onClick={onClick}>
             <X />
           </div>
+         
         </div>
-
+     {isNameField && (
+            <p className="text-sm text-yellow-400 mb-3">
+              This name will be displayed on your certificate
+            </p>
+          )}
+        {/* Input field */}
         <div className="mb-5">
           <label className="text-gray-100 text-sm mb-[6px]" htmlFor="name">
             {label}
           </label>
-
+ 
           {isPhoneNumber ? (
             <div className="flex gap-3">
               <Input
@@ -72,8 +84,12 @@ const EditInfo = ({ label, content, onClick, onSave, type = 'text', isLoading })
               className="w-full py-5 px-3 border-2 rounded-[12px] border-gray-500 mt-1 input-shadow"
             />
           )}
+
+          {/* 👇 Extra message only for Name field */}
+     
         </div>
 
+        {/* Buttons */}
         <div className="flex items-center gap-x-20">
           <Button
             className="px-7 py-6 w-full border border-gray-500 hover:bg-gray-700 font-semibold"

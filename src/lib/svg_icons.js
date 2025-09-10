@@ -57,6 +57,37 @@ export const PremiumIcon = () => (
 
 );
 
+export const Premium = () => (
+<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clipPath="url(#clip0_3715_36885)">
+<rect width="52" height="52" rx="8" fill="url(#paint0_linear_3715_36885)" fillOpacity="0.45"/>
+<path d="M19 34V32H33V34H19ZM19 30.5L17.725 22.475C17.6917 22.475 17.654 22.4793 17.612 22.488C17.57 22.4967 17.5327 22.5007 17.5 22.5C17.0833 22.5 16.7293 22.354 16.438 22.062C16.1467 21.77 16.0007 21.416 16 21C15.9993 20.584 16.1453 20.23 16.438 19.938C16.7307 19.646 17.0847 19.5 17.5 19.5C17.9153 19.5 18.2697 19.646 18.563 19.938C18.8563 20.23 19.002 20.584 19 21C19 21.1167 18.9873 21.225 18.962 21.325C18.9367 21.425 18.9077 21.5167 18.875 21.6L22 23L25.125 18.725C24.9417 18.5917 24.7917 18.4167 24.675 18.2C24.5583 17.9833 24.5 17.75 24.5 17.5C24.5 17.0833 24.646 16.729 24.938 16.437C25.23 16.145 25.584 15.9993 26 16C26.416 16.0007 26.7703 16.1467 27.063 16.438C27.3557 16.7293 27.5013 17.0833 27.5 17.5C27.5 17.75 27.4417 17.9833 27.325 18.2C27.2083 18.4167 27.0583 18.5917 26.875 18.725L30 23L33.125 21.6C33.0917 21.5167 33.0623 21.425 33.037 21.325C33.0117 21.225 32.9993 21.1167 33 21C33 20.5833 33.146 20.229 33.438 19.937C33.73 19.645 34.084 19.4993 34.5 19.5C34.916 19.5007 35.2703 19.6467 35.563 19.938C35.8557 20.2293 36.0013 20.5833 36 21C35.9987 21.4167 35.853 21.771 35.563 22.063C35.273 22.355 34.9187 22.5007 34.5 22.5C34.4667 22.5 34.4293 22.496 34.388 22.488C34.3467 22.48 34.309 22.4757 34.275 22.475L33 30.5H19ZM20.7 28.5H31.3L31.95 24.325L29.325 25.475L26 20.9L22.675 25.475L20.05 24.325L20.7 28.5Z" fill="white"/>
+<g filter="url(#filter0_f_3715_36885)">
+<circle cx="26" cy="61" r="18" fill="#2C68F6"/>
+</g>
+<rect x="-13" y="62.2217" width="88.4425" height="8.92308" transform="rotate(-30 -13 62.2217)" fill="white" fillOpacity="0.1"/>
+</g>
+<rect x="0.5" y="0.5" width="51" height="51" rx="7.5" stroke="white" strokeOpacity="0.6"/>
+<defs>
+<filter id="filter0_f_3715_36885" x="-50.8" y="-15.8" width="153.6" height="153.6" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+<feFlood floodOpacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="29.4" result="effect1_foregroundBlur_3715_36885"/>
+</filter>
+<linearGradient id="paint0_linear_3715_36885" x1="26" y1="0" x2="26" y2="52" gradientUnits="userSpaceOnUse">
+<stop stopColor="#C99BFD"/>
+<stop offset="1" stopColor="#2C68F6"/>
+</linearGradient>
+<clipPath id="clip0_3715_36885">
+<rect width="52" height="52" rx="8" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+
+
+);
+
+
 export const TwitterIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
