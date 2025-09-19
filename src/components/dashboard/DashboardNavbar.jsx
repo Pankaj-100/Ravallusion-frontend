@@ -137,7 +137,7 @@ const DashboardNavbar = () => {
           <div className="w-12 h-12 relative">
             <Image src="/logo.png" alt="logo" fill className="object-contain" />
           </div>
-          <span className="hidden xl:inline xl:text-lg font-semibold whitespace-nowrap">
+          <span className="hidden lg:inline lg:text-lg font-semibold whitespace-nowrap">
   Ravallusion Academy
 </span>
         </div>

@@ -7,8 +7,11 @@ import { useLogoutMutation } from '@/store/Api/auth';
 const AuthNavbar = () => {
      const [logout] = useLogoutMutation();
        const router = useRouter();
+
+ 
        const handleLogoClick = async () => {
       const res = await logout();
+      
       if (res.success) {
         router.push('/');
       

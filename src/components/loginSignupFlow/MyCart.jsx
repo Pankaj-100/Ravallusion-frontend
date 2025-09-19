@@ -8,21 +8,17 @@ import { SubmitButton } from "../common/CustomButton";
 import { handleClick } from "@/lib/paymentGateway";
 import { useGetActivePaymentGatewayQuery } from "@/store/Api/auth";
 import { toast } from "react-toastify";
-import {
-  PayPalButtons,
-  PayPalScriptProvider,
-} from "@paypal/react-paypal-js";
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import InvoiceDetail from "./InvoiceDetail"; // 👈 import your modal
+import InvoiceDetail from "./InvoiceDetail";
 
 const MyCart = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showInvoice, setShowInvoice] = useState(false); // 👈 new state
-  const [proceedPayment, setProceedPayment] = useState(false); // 👈 to trigger payment after invoice
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [proceedPayment, setProceedPayment] = useState(false);
 
   const isIndia = useSelector((state) => state.general.isIndia);
-
   const { data } = useGetActivePaymentGatewayQuery();
   const activePaymentGateway = data?.data?.activeGateways[0];
 
@@ -51,9 +47,7 @@ const MyCart = () => {
 
   const paypalCreateOrder = async () => {
     try {
-      let response = await axios.post("/api/v1/order/paypal", {
-        plan: planId,
-      });
+      let response = await axios.post("/api/v1/order/paypal", { plan: planId });
       return response.data.data.order.order_id;
     } catch (err) {
       toast.error(err.response?.data?.message || "Paypal order failed");
@@ -80,11 +74,10 @@ const MyCart = () => {
       {/* Invoice Modal */}
       <InvoiceDetail
         open={showInvoice}
-        setOpen={(val) => {
-          setShowInvoice(val);
-          if (!val && proceedPayment) {
-            // proceed to payment only after invoice modal closes successfully
-            handleCheckout();
+        setOpen={setShowInvoice}
+        onSuccess={() => {
+          if (proceedPayment) {
+            handleCheckout(); // ✅ start payment only after invoice success
             setProceedPayment(false);
           }
         }}
@@ -93,7 +86,7 @@ const MyCart = () => {
       <div className="w-full p-5 sm:p-10 rounded-[28px] bg-[var(--card-bg)] backdrop-blur-lg sm:min-w-[500px]">
         <Button
           variant="default"
-          className="bg-transparent hover:bg-[var(--navy-blue)]  mb-[20px] -ml-4"
+          className="bg-transparent hover:bg-[var(--navy-blue)] mb-[20px] -ml-4"
           onClick={() => router.back()}
         >
           <ArrowLeft /> Back
@@ -114,9 +107,8 @@ const MyCart = () => {
             disabled={isLoading}
             className={"w-full rounded-[12px] text-md mt-4"}
             onClick={() => {
-              // instead of direct checkout → show invoice first
-          
-              setShowInvoice(true);
+              setProceedPayment(true);
+              setShowInvoice(true); // open invoice first
             }}
           >
             {isLoading ? (
@@ -136,17 +128,11 @@ const MyCart = () => {
           >
             <div style={{ overflowY: "auto", maxHeight: "80vh" }}>
               <PayPalButtons
-                style={{
-                  color: "gold",
-                  shape: "rect",
-                  label: "pay",
-                  height: 50,
-                }}
+                style={{ color: "gold", shape: "rect", label: "pay", height: 50 }}
                 createOrder={async () => {
-                  // open invoice first
                   setProceedPayment(true);
-                  setShowInvoice(true);
-                  return ""; // PayPal requires a string, will be replaced after invoice
+                  setShowInvoice(true); // open invoice first
+                  return ""; // temporary, replaced after invoice
                 }}
                 onApprove={async (data) => {
                   await paypalCaptureOrder(data.orderID);

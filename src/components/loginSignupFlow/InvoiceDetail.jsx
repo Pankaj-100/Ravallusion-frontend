@@ -6,10 +6,10 @@ import { Button } from "../ui/button";
 import {
   useGetInvoiceProfileQuery,
   useUpdateInvoiceProfileMutation,
-} from "@/store/Api/auth"; 
+} from "@/store/Api/auth";
 import { toast } from "react-toastify";
 
-function InvoiceDetail({ open, setOpen }) {
+function InvoiceDetail({ open, setOpen, onSuccess }) {
   const { data, isLoading: isFetching } = useGetInvoiceProfileQuery();
   const [updateInvoiceProfile, { isLoading }] =
     useUpdateInvoiceProfileMutation();
@@ -33,8 +33,9 @@ function InvoiceDetail({ open, setOpen }) {
     try {
       const res = await updateInvoiceProfile({ name, state }).unwrap();
       if (res?.success) {
-       // toast.success("Invoice profile updated successfully");
+        // toast.success("Invoice profile updated successfully");
         setOpen(false);
+        if (onSuccess) onSuccess(); 
       }
     } catch (error) {
       toast.error(error?.data?.message || "Error updating invoice details");
@@ -42,7 +43,10 @@ function InvoiceDetail({ open, setOpen }) {
   };
 
   return (
-    <CustomDialog open={open} close={() => setOpen(false)}>
+    <CustomDialog
+      open={open}
+      close={() => setOpen(false)} 
+    >
       <div className="flex items-center justify-center my-8">
         <div
           className="w-full md:w-4/5 p-10 rounded-[28px]"
@@ -59,10 +63,7 @@ function InvoiceDetail({ open, setOpen }) {
           </div>
 
           <div className="mb-5">
-            <label
-              className="text-gray-100 font-semibold mb-[6px]"
-              htmlFor="name"
-            >
+            <label className="text-gray-100 font-semibold mb-[6px]" htmlFor="name">
               Name
             </label>
             <Input
@@ -92,7 +93,7 @@ function InvoiceDetail({ open, setOpen }) {
               onClick={handleSubmit}
               disabled={isLoading || isFetching}
             >
-              {isLoading ? "Subscibing..." : "Subscribe"}
+              {isLoading ? "Subscribing..." : "Subscribe"}
             </Button>
           </div>
         </div>
