@@ -56,7 +56,7 @@ const PrimaryDashboard = () => {
   }
 
   return (
-    <div className="w-full flex flex-col md:flex-row items-center justify-center h-auto md:h-[400px] bg-gradient-to-r from-[#181c2a] via-[#23263a] to-[#181c2a] rounded-2xl shadow-xl gap-2 p-2">
+    <div className="w-full flex flex-col md:flex-row items-center justify-center mb-2 h-auto md:h-[400px] bg-gradient-to-r from-[#181c2a] via-[#23263a] to-[#181c2a] rounded-2xl shadow-xl gap-2 p-2">
       {/* Left Side Image */}
       <div className="w-full md:w-[30%] h-[200px] md:h-full relative rounded-2xl overflow-hidden">
         <Image
@@ -70,7 +70,7 @@ const PrimaryDashboard = () => {
       </div>
 
       {/* Center Carousel */}
-      <div className="w-full md:w-[40%] h-[250px] md:h-full flex items-center justify-center">
+      <div className="w-full md:w-[40%] h-[250px] md:h-full flex items-center justify-center ">
         <div className="w-full h-full bg-black/80 flex items-center justify-center relative overflow-hidden shadow-2xl rounded-2xl">
           <CarouselWrapper navigation={false} showDots={true}>
             {carouselItems.map((item, idx) => (

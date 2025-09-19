@@ -167,7 +167,7 @@ const VideoDescription = ({
 
   return (
     <div className="text-white ms-1">
-      <div className="flex justify-between my-2">
+      <div className="flex justify-between mt-2 mb-1">
         <h1 className="text-lg font-semibold">{title}</h1>
         {title && !isBookmarked && (
           <div
@@ -178,8 +178,30 @@ const VideoDescription = ({
           </div>
         )}
       </div>
-
-      <div className="mb-2">
+ <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center ">
+   <TextIconBox
+  title="Submit assignment"
+  icon={<Assignment />}
+  onClick={() => {
+    if (isCompleted) {
+      setIsAssignmentOpen(true);
+    }
+  
+  }}
+  disabled={!isCompleted}
+/>
+        <TextIconBox
+          title="Download assets"
+          icon={<DownloadIcon />}
+          onClick={handleDownloadAssignment}
+        />
+        {/* <TextIconBox
+          title="Download resources"
+          icon={<Resources />}
+          onClick={handleResource}
+        /> */}
+      </div>
+      <div className="mt-2">
         <p className="text-sm">
           {isExpanded ? description : truncatedText}
           {description?.length > 100 && (
@@ -214,29 +236,7 @@ const VideoDescription = ({
         </div>
       )}
 
-      <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center flex-wrap">
-   <TextIconBox
-  title="Submit assignment"
-  icon={<Assignment />}
-  onClick={() => {
-    if (isCompleted) {
-      setIsAssignmentOpen(true);
-    }
-  
-  }}
-  disabled={!isCompleted}
-/>
-        <TextIconBox
-          title="Download assets"
-          icon={<DownloadIcon />}
-          onClick={handleDownloadAssignment}
-        />
-        {/* <TextIconBox
-          title="Download resources"
-          icon={<Resources />}
-          onClick={handleResource}
-        /> */}
-      </div>
+     
 
       <CustomDialog
         open={isAssignmentOpen}
@@ -254,7 +254,7 @@ const VideoDescription = ({
 const TextIconBox = ({ title, icon, onClick, disabled }) => (
   <div
     onClick={!disabled ? onClick : undefined}
-    className={`bg-[#2C68F626] flex-1  flex items-center justify-center gap-x-4 rounded-[8px] px-2 py-2 h-12 w-full md:w-auto border border-[var(--neon-purple)] ${
+    className={`bg-[#2C68F626] flex-1  flex items-center justify-center gap-x-4 rounded-[8px] px-2 py-2 h-10 w-full md:w-auto border border-[var(--neon-purple)] ${
       disabled
         ? "cursor-not-allowed opacity-50"
         : "cursor-pointer hover:bg-[#2C68F640]"

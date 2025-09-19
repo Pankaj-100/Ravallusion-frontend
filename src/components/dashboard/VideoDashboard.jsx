@@ -10,6 +10,8 @@ import {
   useGetCourseProgressQuery,
   useUpdateVideoProgressMutation,
 } from "@/store/Api/videoProgress";
+import { useGetCourseProgressQuery as useGetOverallCourseProgressQuery } from "@/store/Api/courseProgress";
+
 import {
   setUpdatedPercentageWatched,
   setVideoIdOfcurrentVideo,
@@ -28,6 +30,7 @@ const VideoDashboard = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState(false);
+const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
 
   const videoId = searchParams.get("videoId");
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
@@ -54,6 +57,7 @@ const VideoDashboard = () => {
   } = useGetCourseProgressQuery(courseId, {
     skip: !courseId,
   });
+  console.log(courseProgress)
 
   useEffect(() => {
     if (videoId && courseId) {
@@ -121,6 +125,9 @@ const VideoDashboard = () => {
       dispatch(setUpdatedPercentageWatched(res?.videoProgress?.percentageWatched));
       dispatch(setVideoIdOfcurrentVideo(videoId));
       dispatch(updateVideo(res.videoProgress));
+
+   
+   
     } catch (e) {
       console.error("Error updating progress:", e);
     }
@@ -158,6 +165,11 @@ const VideoDashboard = () => {
       setIsCompleted(foundVideo.isCompleted);
     }
   }, [courseProgress, videoId]);
+  useEffect(() => {
+  if (isCompleted) {
+    refetchOverallProgress();
+  }
+}, [isCompleted, refetchOverallProgress]);
 
   const handleUpgrade = () => {
     router.push('/Upgrade-plan');
@@ -167,8 +179,8 @@ const VideoDashboard = () => {
   const videoPlayerKey = videoUrl || "no-video";
 
   return (
-    <div className="lg:mt-2 flex lg:flex-row flex-col ">
-      <div className="lg:mr-4 xl:mr-4  lg:w-[50%] w-full lg:ms-20">
+    <div className=" flex lg:flex-row flex-col ">
+      <div className="  w-full aspect-video  lg:ms-12">
         <div className="relative w-full aspect-video  bg-black rounded-xl ">   
           {isLoading || courseProgressLoading ? (
             // ⏳ While fetching course/video data
@@ -295,7 +307,7 @@ const VideoDashboard = () => {
           )}
         </div>
 
-        <div className="my-[10px]  lg:px-0 ">
+        <div className=" lg:px-0 ">
           <VideoDescription
             chapterRef={chapterRef}
             showTimeStamp={showTimeStamp}
@@ -311,7 +323,7 @@ const VideoDashboard = () => {
         </div>
       </div>
 
-      <div className="lg:my-0 lg:w-[33%] px-4 lg:px-0 mt-8 lg:mt-0 rounded-md lg:ms-[80px]">
+      <div className=" lg:w-[55%]  px-4 lg:px-0 lg:mt-0 rounded-md xl:me-12 lg:ms-4 ">
         <PlayerSidebar />
       </div>
     </div>

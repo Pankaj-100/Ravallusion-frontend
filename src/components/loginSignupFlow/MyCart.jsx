@@ -115,7 +115,7 @@ const MyCart = () => {
             className={"w-full rounded-[12px] text-md mt-4"}
             onClick={() => {
               // instead of direct checkout → show invoice first
-              setProceedPayment(true);
+          
               setShowInvoice(true);
             }}
           >

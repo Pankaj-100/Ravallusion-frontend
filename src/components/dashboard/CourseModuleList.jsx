@@ -81,7 +81,7 @@ const CourseModuleList = ({
 
   return (
     <>
-      <h1 className="text-xl font-bold mb-7 px-3">{heading=="Advanced"?"VFX":"Editorial"}</h1>
+      <h1 className="text-xl font-bold mb-4 px-3">{heading=="Advanced"?"VFX":"Editorial"}</h1>
       <div className="flex flex-col gap-y-4">
         {isLoading ? (
           <CourseSkeletonLoader />
@@ -159,7 +159,7 @@ const CourseCard = ({
               fill
               style={{ borderRadius: "12px", objectFit: "cover" }}
             />
-            <span
+            {/* <span
               style={{
                 background: "rgba(0, 0, 0, 0.50)",
                 backdropFilter: "blur(5.4px)",
@@ -167,7 +167,7 @@ const CourseCard = ({
               className="px-1 py-[2px] text-md absolute top-2 right-2 rounded-sm"
             >
               {videoCount} videos
-            </span>
+            </span> */}
           </div>
 
           <div className="flex-grow w-32">
@@ -336,7 +336,7 @@ const CourseCardExpand = ({
                       <PremiumIcon size={20} />
                     </div>
                   )}
-                  <span
+                  {/* <span
                     style={{
                       background: "rgba(0, 0, 0, 0.50)",
                       backdropFilter: "blur(5.4px)",
@@ -344,14 +344,14 @@ const CourseCardExpand = ({
                     className="px-1 py-[2px] text-[10px] absolute top-2 right-2 rounded-sm"
                   >
                     {getSubmoduleVideoCount(submodule)} videos
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="flex-grow w-32">
                   <h1 className="text-md font-normal mb-1 flex items-center gap-1">
                     {submodule.name}
                   </h1>
-                  <p className="text-[10px] truncate whitespace-nowrap">
+                  <p className="text-[14px] truncate text-gray-400 font-bold whitespace-nowrap">
                     {getSubmoduleVideoCount(submodule)} videos
                   </p>
                 </div>

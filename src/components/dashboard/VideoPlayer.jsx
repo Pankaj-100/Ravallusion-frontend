@@ -792,25 +792,41 @@ const handleTimeUpdate = () => {
     onPlayChange(true); 
   };
 
-  const handleQualityChange = (quality) => {
-    setSelectedQuality(quality);
-    const newSrc = `${cdnDomain}/${source}/${quality}p.m3u8`;
-    
-    if (newSrc !== src) {
-      const currentTime = videoRef.current ? videoRef.current.currentTime : 0;
-      setSrc(newSrc);
-      
-      // Reload the source with Shaka Player
-      if (playerRef.current) {
-        loadSource(playerRef.current, newSrc).then(() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = currentTime;
-          }
-        });
-      }
+const handleQualityChange = async (quality) => {
+  if (!playerRef.current || !videoRef.current) return;
+
+  setSelectedQuality(quality);
+  const newSrc = `${cdnDomain}/${source}/${quality}p.m3u8`;
+  const currentTime = videoRef.current.currentTime;
+  const wasPlaying = !videoRef.current.paused;
+
+  try {
+    // Show loader on top of current frame
+    setLoading(true);
+
+    // Pause playback temporarily
+    videoRef.current.pause();
+
+    // Load new quality
+    await playerRef.current.load(newSrc);
+
+    // Restore playback position
+    videoRef.current.currentTime = currentTime;
+
+    if (wasPlaying) {
+      await videoRef.current.play();
     }
-    toggleSettings();
-  };
+  } catch (error) {
+    console.error("Error switching quality:", error);
+    toast.error("Unable to switch video quality");
+  } finally {
+    // Hide loader after new video is ready
+    setLoading(false);
+  }
+
+  toggleSettings();
+};
+
 
   const settingsMenu = () => {
     return (
@@ -874,7 +890,7 @@ const handleTimeUpdate = () => {
                 </li>
                 <li
                   onClick={() => handleQualityChange(720)}
-                  className={selectedQuality === "720" ? "active" : ""}
+                  className={selectedQuality === 720 ? "active" : ""}
                 >
                   720p
                 </li>
@@ -932,6 +948,7 @@ const handleTimeUpdate = () => {
       ) : null}
 
       <div className="video-player">
+        
         <video
           ref={videoRef}
           className="react-player"
@@ -1057,7 +1074,7 @@ const handleTimeUpdate = () => {
                 ref={progressRef}
                 min={0}
                 max={100}
-                value={played}
+                 value={isNaN(played) ? 0 : played}
                 step="any"
                 onChange={handleSeekChange}
                 onMouseDown={handleSeekMouseDown}

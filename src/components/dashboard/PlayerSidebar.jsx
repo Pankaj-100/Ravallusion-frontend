@@ -135,8 +135,9 @@ const PlayerSidebar = () => {
         />
       </div>
 
-      <div className="py-4 bg-[#181F2B] rounded-2xl h-[73vh] overflow-y-auto custom-scrollbar-hover">
-        {activeIndex === 0 && (
+<div className="py-2 bg-[#181F2B] rounded-2xl h-[88%] mb-2 overflow-y-auto custom-scrollbar-hover">   
+  <div className=" bg-[#181F2B] rounded-2xl h-[70vh]  ">   
+       {activeIndex === 0 && (
           <>
             {courseType === "beginner" && beginnerCourse && (
               <CourseModuleList
@@ -177,6 +178,7 @@ const PlayerSidebar = () => {
           />
         )}
       </div>
+       </div>
     </>
   );
 };

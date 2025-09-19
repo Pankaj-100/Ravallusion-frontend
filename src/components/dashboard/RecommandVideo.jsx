@@ -64,12 +64,12 @@ const RecommandVideo = () => {
   }
 
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       <h1 className="text-lg font-semibold mb-4 px-3">
         VFX videos you might also like
       </h1>
 
-      <div className="flex flex-col gap-y-5 px-3">
+      <div className="flex flex-col gap-y-4 px-3">
         {videos.map((item) => {
           const video = item.video;
           return (
@@ -83,7 +83,7 @@ const RecommandVideo = () => {
                 if (e.key === "Enter" || e.key === " ") handleVideoClick(video);
               }}
             >
-              <div className="relative w-36 h-20 rounded-lg overflow-hidden">
+              <div className="relative w-32 h-16  rounded-lg overflow-hidden">
                 <Image
                   src={video.thumbnailUrl}
                   alt={video.title}
@@ -102,7 +102,7 @@ const RecommandVideo = () => {
               </div>
 
               <div className="flex-grow">
-                <h2 className="text-lg font-medium leading-tight">{video.title}</h2>
+                <h2 className="text-sm font-medium leading-tight">{video.title}</h2>
               </div>
             </div>
           );

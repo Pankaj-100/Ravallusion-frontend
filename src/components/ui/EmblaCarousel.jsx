@@ -73,25 +73,36 @@ const EmblaCarousel = ({ slides, options }) => {
     videoRefs.current = Array(slides?.length).fill(null);
   }, [slides?.length]);
 
-  // 👇 Intersection Observer to refresh carousel when not visible
-  useEffect(() => {
-    if (!carouselContainerRef.current) return;
+// 👇 Intersection Observer to pause autoplay + videos when out of view
+useEffect(() => {
+  if (!carouselContainerRef.current || !emblaApi) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const isVisible = entries[0].isIntersecting;
-        if (!isVisible) {
-          setRefreshKey((prev) => prev + 1); // 🔄 force remount carousel
-        }
-      },
-      { threshold: 0.2 }
-    );
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const isVisible = entries[0].isIntersecting;
 
-    observer.observe(carouselContainerRef.current);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+      if (isVisible) {
+        // ✅ Resume autoplay when carousel is visible
+        autoplay.current?.play();
+
+        
+      } else {
+        // ⛔ Stop autoplay
+        // autoplay.current?.stop();
+
+        // ⛔ Pause all playing videos
+        videoRefs.current.forEach((videoRef) => {
+          if (videoRef?.pause) videoRef.pause();
+        });
+      }
+    },
+    { threshold: 0.2 }
+  );
+
+  observer.observe(carouselContainerRef.current);
+  return () => observer.disconnect();
+}, [emblaApi]);
+
 
   const { prevBtnDisabled, nextBtnDisabled, onPrevButtonClick, onNextButtonClick } =
     usePrevNextButtons(emblaApi);
@@ -153,21 +164,24 @@ const EmblaCarousel = ({ slides, options }) => {
     [emblaApi]
   );
 
-  const handleSlideChange = useCallback(
-    (emblaApi) => {
-      if (!emblaApi) return;
+const handleSlideChange = useCallback(
+  (emblaApi) => {
+    if (!emblaApi) return;
 
-      const currentIndex = emblaApi.selectedScrollSnap();
-      setActiveIndex(currentIndex);
+    const currentIndex = emblaApi.selectedScrollSnap();
+    setActiveIndex(currentIndex);
 
-      const currentVideoRef = videoRefs.current[currentIndex];
-      if (currentVideoRef) {
-        if (currentVideoRef.pause) currentVideoRef.pause();
-        if (currentVideoRef.seekTo) currentVideoRef.seekTo(0);
+    // 🔄 Reset ALL videos whenever carousel changes
+    videoRefs.current.forEach((videoRef) => {
+      if (videoRef) {
+        if (videoRef.pause) videoRef.pause();
+        if (videoRef.seekTo) videoRef.seekTo(0);
       }
-    },
-    [videoRefs]
-  );
+    });
+  },
+  [videoRefs]
+);
+
 
   useEffect(() => {
     if (!emblaApi) return;
