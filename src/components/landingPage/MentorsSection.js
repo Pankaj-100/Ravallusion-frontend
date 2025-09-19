@@ -73,9 +73,9 @@ const MentorsSection = ({ mentor }) => {
   }, []);
 
   return (
-    <LandingContainer className="pt-12 sm:pt-[7.5rem] !flex-col !h-fit ">
-      <div className=" h-full grid grid-cols-1 lg:grid-cols-2 gap-7 2xl:gap-8 mt-20">
-   <div className="relative h-[22rem] md:h-[26rem] lg:h-[33rem] rounded-xl vinod-card overflow-hidden mt-6 ">
+    <LandingContainer className="pt-12 sm:pt-[7.5rem] !flex-col !h-fit  ">
+      <div className=" h-full grid grid-cols-1 lg:grid-cols-2 gap-7 2xl:gap-8 mt-40">
+   <div className="relative h-[24rem] md:h-[26rem] lg:h-[35rem] rounded-xl vinod-card overflow-hidden  ">
   {/* <div className="relative h-[32rem] md:h-[40rem] lg:h-full rounded-xl vinod-card overflow-hidden">
   <div className="w-full flex justify-center mt-10">
     <Vinod />
@@ -107,7 +107,7 @@ const MentorsSection = ({ mentor }) => {
 
 </div> */}
   <Image
-    src="/vinodanna.png"
+    src="/Cardweb_740.png"
     fill
     alt="Vinod"
     
