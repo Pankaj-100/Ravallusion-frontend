@@ -67,13 +67,13 @@ const EmblaCarousel = ({ slides, options }) => {
   const carouselContainerRef = useRef(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0); // 👈 used to force refresh
+  const [refreshKey, setRefreshKey] = useState(0); 
 
   useEffect(() => {
     videoRefs.current = Array(slides?.length).fill(null);
   }, [slides?.length]);
 
-// 👇 Intersection Observer to pause autoplay + videos when out of view
+
 useEffect(() => {
   if (!carouselContainerRef.current || !emblaApi) return;
 
@@ -82,15 +82,11 @@ useEffect(() => {
       const isVisible = entries[0].isIntersecting;
 
       if (isVisible) {
-        // ✅ Resume autoplay when carousel is visible
         autoplay.current?.play();
 
         
       } else {
-        // ⛔ Stop autoplay
-        // autoplay.current?.stop();
-
-        // ⛔ Pause all playing videos
+    
         videoRefs.current.forEach((videoRef) => {
           if (videoRef?.pause) videoRef.pause();
         });
@@ -171,7 +167,6 @@ const handleSlideChange = useCallback(
     const currentIndex = emblaApi.selectedScrollSnap();
     setActiveIndex(currentIndex);
 
-    // 🔄 Reset ALL videos whenever carousel changes
     videoRefs.current.forEach((videoRef) => {
       if (videoRef) {
         if (videoRef.pause) videoRef.pause();
@@ -217,7 +212,6 @@ const handleSlideChange = useCallback(
 
   return (
     <div key={refreshKey} className="embla relative" ref={carouselContainerRef}>
-      {/* 👆 key={refreshKey} forces remount on refresh */}
       <div className="embla__viewport" ref={emblaRef}>
         <div className="embla__container">
           {slides?.map((item, index) => (
@@ -239,7 +233,7 @@ const handleSlideChange = useCallback(
       <div className="embla__controls">
         <div className="embla__buttons">
           <PrevButton
-            className="absolute left-[9%] 2xl:left-[10rem] top-[50%] -translate-y-[50%] bg-gray-700 hover:bg-gray-900 text-white w-7 h-7 rounded-full z-[1000]"
+            className="absolute left-[10%] 2xl:left-[10rem] top-[50%] -translate-y-[50%] bg-gray-700 hover:bg-gray-900 text-white w-7 h-7 rounded-full z-[1000]"
             onClick={handlePrev}
             disabled={prevBtnDisabled}
           />
