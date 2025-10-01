@@ -229,7 +229,7 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
                           Upgrade your subscription plan
                         </h3>
                         <p className="text-[14px] leading-[20px] text-white/70 mt-1.5">
-               This is applicable only for beginner plan users
+               This is applicable only for Advance plan users
                         </p>
                       </div>
                     </div>
