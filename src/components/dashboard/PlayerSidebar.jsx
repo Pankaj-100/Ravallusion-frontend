@@ -72,7 +72,6 @@ const PlayerSidebar = () => {
 //  dispatch(setCourseType("beginner"));
   // Set courseId and firstVideoId based on course type and tool type
   useEffect(() => {
-    console.log("useEffect triggered with:", { courseType, tooltype });
     if (courseType === "beginner" && beginnerCourse) {
       dispatch(setCourseId(beginnerCourse?._id));
       dispatch(setCourse(beginnerCourse));

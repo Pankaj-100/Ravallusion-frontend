@@ -31,7 +31,7 @@ const VideoDashboard = () => {
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState(false);
 const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
-
+const [isPlaying, setIsPlaying] = useState(false);
   const videoId = searchParams.get("videoId");
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
   const isLocked = useSelector((state) => state.general.isLocked);
@@ -57,7 +57,7 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
   } = useGetCourseProgressQuery(courseId, {
     skip: !courseId,
   });
-  console.log(courseProgress)
+  
 
   useEffect(() => {
     if (videoId && courseId) {
@@ -109,7 +109,7 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
     }
   }, [videoId, sidebarTabIndex]);
 
-  // ⏱ Update progress every 10s (stable interval + latest value via ref)
+  // Update progress every 10s 
   const [updateProgress] = useUpdateVideoProgressMutation();
 
   const watchTimeRef = useRef(0);
@@ -134,18 +134,18 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
   }, [videoId, updateProgress, dispatch]);
 
   useEffect(() => {
-    if (!videoId) return;
+   if (!videoId || !isPlaying) return;
 
     const id = setInterval(() => {
       flushProgress(); // sends latest watchTime every 10s
     }, 10000);
 
-    // also send one final update when switching videos/unmounting
+  
     return () => {
       clearInterval(id);
       flushProgress();
     };
-  }, [videoId, flushProgress]);
+  }, [videoId, isPlaying,flushProgress]);
 
   useEffect(() => {
     if (courseProgress) {
@@ -301,6 +301,12 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
               iscourse={status}
               isCompleted={isCompleted}
               setIsCompleted={setIsCompleted}
+  //               onPlay={() => setIsPlaying(true)}
+  //               onPause={() => setIsPlaying(false)}
+  //                onEnded={() => {
+  //               setIsPlaying(false);
+              
+  // }}
             />
           ) : (
             <></>

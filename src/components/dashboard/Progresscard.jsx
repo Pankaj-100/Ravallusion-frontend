@@ -20,7 +20,7 @@ function Progresscard() {
 
  const { data: progressData, isLoading } = useGetCourseProgressQuery();
 
- console.log(progressData)
+
 
   const { data: certificateData, isCertficateLoading } =
     useGetMyCertificateQuery();

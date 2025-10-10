@@ -61,7 +61,7 @@ const PersonalInfoCard = () => {
       await updateAvatar(formData).unwrap();
       toast.success("Profile image updated successfully");
     } catch (error) {
-      console.log(error);
+    
       toast.error(error?.data?.message || "Failed to upload image");
     }
   };

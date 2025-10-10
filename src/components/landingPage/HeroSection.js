@@ -10,7 +10,7 @@ const HeroSection = ({ data }) => {
   const firstPart = words?.slice(0, -1).join(" ");
   const lastPart = words && words[words?.length - 1];
   const [isMobile, setIsMobile] = useState(false);
-console.log(data?.caption)
+
   useEffect(() => {
     const mobileWidth = window.innerWidth < 640;
     setIsMobile(mobileWidth);

@@ -17,7 +17,7 @@ export default function LandingLayout({ children }) {
       try {
         const ip = await publicIpv4();
         const data = await ipLocation(ip);
-        console.log(data);
+      
         if (data) {
           dispatch(setIsIndia(data?.country?.name === "India"));
           // dispatch(setIsIndia(false));

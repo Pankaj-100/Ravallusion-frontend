@@ -118,7 +118,7 @@ const Login = () => {
             }
         },
         onError: (error) => {
-            console.log("Login Failed:", error);
+          
             toast.error(error.message || "Login failed. Please try again.");
         }
     });

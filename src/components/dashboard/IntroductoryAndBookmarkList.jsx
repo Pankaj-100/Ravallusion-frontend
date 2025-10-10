@@ -232,7 +232,7 @@ export const LessonCard = ({
       const res = await deleteBookmark({ bookmarkedId });
       toast(res.message);
     } catch (error) {
-      console.log(error);
+     
       toast.error(error?.data?.message || "Error while removing bookmark");
     }
   };
