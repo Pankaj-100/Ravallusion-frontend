@@ -175,7 +175,7 @@ useEffect(() => {
           if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
             console.log("🎯 Handling DRM license request...");
 
-            const res = await fetch(`http://localhost:4000/api/v1/video/getlicense/header?assetId=${source}`);
+            const res = await fetch(`https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`);
             const data = await res.json();
 
             if (data.headers?.['x-keyos-authorization']) {
