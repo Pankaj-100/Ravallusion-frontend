@@ -301,12 +301,12 @@ const [isPlaying, setIsPlaying] = useState(false);
               iscourse={status}
               isCompleted={isCompleted}
               setIsCompleted={setIsCompleted}
-  //               onPlay={() => setIsPlaying(true)}
-  //               onPause={() => setIsPlaying(false)}
-  //                onEnded={() => {
-  //               setIsPlaying(false);
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                 onEnded={() => {
+                setIsPlaying(false);
               
-  // }}
+  }}
             />
           ) : (
             <></>

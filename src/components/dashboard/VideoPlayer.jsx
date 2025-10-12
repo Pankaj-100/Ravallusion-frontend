@@ -51,9 +51,9 @@ const VideoPlayer = ({
   playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-20 w-20" />,
   latestVideo = false,
   onPlayChange = () => {},
-  //   onPlay = () => {},
-  // onPause = () => {},
-  // onEnded = () => {},
+    onPlay = () => {},
+  onPause = () => {},
+  onEnded = () => {},
   showTimeStamp,
   setShowTimeStamp,
   iscourse,
@@ -138,7 +138,7 @@ useEffect(() => {
       }
 
       if (!shaka.Player.isBrowserSupported()) {
-        onPlayerError(new Error("Browser not supported by Shaka Player"));
+        console.error("Shaka Player is not supported on this browser.");
         return;
       }
 
@@ -152,7 +152,7 @@ useEffect(() => {
 
       // Error listener
       player.addEventListener("error", (e) => {
-        onPlayerError(e.detail);
+        console.error("Shaka Player Error:", e.detail);
       });
 
       // FairPlay Certificate Function
@@ -233,7 +233,7 @@ useEffect(() => {
             }
           }
         } catch (err) {
-          onPlayerError(err);
+          console.error("Request filter error:", err);
         }
       });
 
@@ -252,7 +252,7 @@ useEffect(() => {
             }
           }
         } catch (e) {
-          onPlayerError(e);
+         console.error("Response filter error:", e);
         }
       });
 
@@ -260,7 +260,7 @@ useEffect(() => {
       await loadSource(player);
       
     } catch (err) {
-      onPlayerError(err);
+     
     }
   };
 
@@ -323,24 +323,20 @@ const loadSource = async (player) => {
       try {
         await video.play();
       } catch (playError) {
-        onPlayerError(playError);
+        console.error("Autoplay failed:", playError);
       }
     }
 
     setLoading(false);
   } catch (error) {
     setLoading(false);
-    onPlayerError(error);
+   
   }
 };
 
 
 
-  // Player error handler
-  const onPlayerError = (error) => {
-    console.error('Shaka Player Error:', error);
-  
-  };
+
 
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -622,29 +618,35 @@ const loadSource = async (player) => {
     };
   }, []);
 
-  useEffect(() => {
-    // Reset all playback states whenever new video is loaded
-    setFirstPlay(true);
-    setPlaying(false);
-    setShowRestartButton(false);
-    setIsVideoCompleted(false);
-    setCurrentTime(0);
-    setPlayed(0);
-    setDuration(0);
-    setMaxWatchTime(0);
-    setHoveredTime(null);
-    setCurrentChapter("");
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.pause();
-    }
+useEffect(() => {
+  // Reset playback states for new video
+  setFirstPlay(true);
+  setPlaying(false);
+  setShowRestartButton(false);
+  setIsVideoCompleted(false);
+  setCurrentTime(0);
+  setPlayed(0);
+  setDuration(0);
+  setMaxWatchTime(0);
+  setHoveredTime(null);
+  setCurrentChapter("");
+  setLastPosition(0);
 
-    // Clear progress interval
-    if (intervalId) {
-      clearInterval(intervalId);
-      setIntervalId(null);
-    }
-  }, [videoId, source]);
+  // Reset watch time
+  if (setWatchTime) setWatchTime(0);
+
+  // Clear previous interval
+  if (intervalId) {
+    clearInterval(intervalId);
+    setIntervalId(null);
+  }
+
+  if (videoRef.current) {
+    videoRef.current.currentTime = 0;
+    videoRef.current.pause();
+  }
+}, [videoId, source]);
+
 
   // Cleanup the interval when the component unmounts
   useEffect(() => {
@@ -709,46 +711,49 @@ const loadSource = async (player) => {
     setLoading(false);
   };
 
-  const handlePlayPause = async () => {
-    setFirstPlay(false);
-   
-    if (!videoRef.current) return;
-    
-    if (videoRef.current.paused) {
-      setPlaying(true);
-      onPlayChange(true);
-      // onPlay(); 
-      await videoRef.current.play();
-      
-      // Set up interval for tracking watch time
-      const id = setInterval(() => {
-        if (videoRef.current && setWatchTime) {
-          const currentTime = videoRef.current.currentTime;
-          setWatchTime(currentTime);
-        }
-      }, 5000);
-      setIntervalId(id);
-    } else {
-      setPlaying(false);
-      onPlayChange(false);
-      //  onPause();
-      videoRef.current.pause();
-      
-      if (intervalId) {
-        clearInterval(intervalId);
-        setIntervalId(null);
+const handlePlayPause = async () => {
+  setFirstPlay(false);
+  
+  if (!videoRef.current) return;
+
+  if (videoRef.current.paused) {
+    setPlaying(true);
+    onPlayChange(true);
+    onPlay(); 
+    await videoRef.current.play();
+
+    // Clear existing interval if any
+    if (intervalId) clearInterval(intervalId);
+
+    // Set up new interval
+    const id = setInterval(() => {
+      if (videoRef.current && setWatchTime) {
+        setWatchTime(videoRef.current.currentTime);
       }
+    }, 5000);
+    setIntervalId(id);
+
+  } else {
+    setPlaying(false);
+    onPlayChange(false);
+    onPause();
+    videoRef.current.pause();
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
     }
-    
-    setShowRestartButton(false);
-  };
+  }
+
+  setShowRestartButton(false);
+};
 
   const handleEnded = async () => {
     setPlaying(false);
     setShowRestartButton(true);
     setIsVideoCompleted(true);
     setIsCompleted(true);
-    //  onEnded(); 
+     onEnded(); 
     
     try {
       // Your refetch logic here
