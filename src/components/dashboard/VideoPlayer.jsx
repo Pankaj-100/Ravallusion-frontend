@@ -105,19 +105,19 @@ const VideoPlayer = ({
 
   // DRM configuration
   // const assetId = "y"; // Your testing asset ID
-const checkAudioStatus = () => {
-  if (!videoRef.current) return;
+// const checkAudioStatus = () => {
+//   if (!videoRef.current) return;
   
-  console.log('=== AUDIO STATUS ===');
-  console.log('Volume:', videoRef.current.volume);
-  console.log('Muted:', videoRef.current.muted);
-  console.log('Paused:', videoRef.current.paused);
-  console.log('Ready state:', videoRef.current.readyState);
-  console.log('Current time:', videoRef.current.currentTime);
-  console.log('Duration:', videoRef.current.duration);
+//   console.log('=== AUDIO STATUS ===');
+//   console.log('Volume:', videoRef.current.volume);
+//   console.log('Muted:', videoRef.current.muted);
+//   console.log('Paused:', videoRef.current.paused);
+//   console.log('Ready state:', videoRef.current.readyState);
+//   console.log('Current time:', videoRef.current.currentTime);
+//   console.log('Duration:', videoRef.current.duration);
 
-  console.log('====================');
-};
+//   console.log('====================');
+// };
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -125,152 +125,198 @@ const checkAudioStatus = () => {
 // Initialize Shaka Player with DRM
 useEffect(() => {
   if (!isClient || !videoRef.current) return;
-  console.log("Initializing Shaka Player...");
 
-  async function initShaka() {
+  console.log("🎬 Initializing Shaka Player...");
+
+  const initShaka = async () => {
     try {
       const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
 
+      // Install all necessary polyfills
       shaka.polyfill.installAll();
       shaka.polyfill.PatchedMediaKeysApple?.install?.();
 
       if (!shaka.Player.isBrowserSupported()) {
-        console.error("Browser not supported by Shaka Player!");
+        console.error("❌ Browser not supported by Shaka Player!");
         return;
       }
 
       const player = new shaka.Player(videoRef.current);
       playerRef.current = player;
 
-      player.addEventListener("error", onPlayerError);
+      // General error listener
+      player.addEventListener("error", (e) => {
+        const err = e.detail;
+        console.error("🚨 Shaka Player Error:", err.code, err.data || err);
+      });
 
-      // Configure DRM servers
+      // ─────────────────────────────────────────────
+      // DRM CONFIGURATION
+      // ─────────────────────────────────────────────
       player.configure({
         drm: {
           servers: {
-            'com.widevine.alpha': 'https://widevine.keyos.com/api/v4/getLicense',
-            'com.microsoft.playready': 'https://playready.keyos.com/api/v4/getLicense',
-            'com.apple.fps.1_0': 'https://fairplay.keyos.com/api/v4/getLicense',
+            "com.widevine.alpha": "https://widevine.keyos.com/api/v4/getLicense",
+            "com.microsoft.playready": "https://playready.keyos.com/api/v4/getLicense",
+            "com.apple.fps.1_0": "https://fairplay.keyos.com/api/v4/getLicense",
           },
         },
       });
 
       console.log("✅ DRM configured. Registering request filter...");
 
-      player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
-        try {
-          const typeNames = {
-            0: "MANIFEST",
-            1: "SEGMENT",
-            2: "LICENSE",
-            3: "APP_MANIFEST",
-            4: "TIMING",
-          };
-          const readableType = typeNames[type] || `UNKNOWN (${type})`;
+      // ─────────────────────────────────────────────
+      // REQUEST FILTER → to attach headers dynamically
+      // ─────────────────────────────────────────────
+  player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
+  try {
+    // Handle LICENSE requests only
+    if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
+      const res = await fetch(
+        `https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`
+      );
+      const data = await res.json();
 
-          console.group(`🔹 Shaka Request (${readableType})`);
-          console.log("Request Object:", request);
-          console.groupEnd();
+      if (data.headers?.["x-keyos-authorization"]) {
+        request.headers["x-keyos-authorization"] =
+          data.headers["x-keyos-authorization"];
+      }
 
-          if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
-            console.log("🎯 Handling DRM license request...");
-
-            const res = await fetch(`https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`);
-            const data = await res.json();
-
-            if (data.headers?.['x-keyos-authorization']) {
-              request.headers['x-keyos-authorization'] = data.headers['x-keyos-authorization'];
-              console.log("✅ Added x-keyos-authorization header");
-
-              // FairPlay specific
-              if (request.uris[0]?.includes('fps')) {
-                const originalPayload = new Uint8Array(request.body);
-                const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
-                request.body = shaka.util.StringUtils.toUTF8(`spc=${base64Payload}&assetId=${source}`);
-                request.headers['Content-Type'] = 'text/plain';
-              }
-            }
-          }
-        } catch (err) {
-          console.error("❌ Error in request filter:", err);
-        }
-      });
-
-      console.log("📡 Loading video source...");
-      await loadSource(player);
-
-    } catch (err) {
-      console.error("Failed to initialize Shaka Player:", err);
+      // Handle FairPlay (Apple) license format
+      if (request.uris[0]?.includes("fps")) {
+        const originalPayload = new Uint8Array(request.body);
+        const base64Payload =
+          shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
+        request.body = shaka.util.StringUtils.toUTF8(
+          `spc=${base64Payload}&assetId=${source}`
+        );
+        request.headers["Content-Type"] = "text/plain";
+      }
     }
+  } catch (err) {
+    console.error("Error in Shaka request filter:", err);
   }
+});
+
+      // ─────────────────────────────────────────────
+      // Load the source
+      // ─────────────────────────────────────────────
+        // Response filter to inspect license responses (helpful to debug license parsing issues)
+        player.getNetworkingEngine().registerResponseFilter((type, response) => {
+          try {
+            const typeNames = {
+              0: "MANIFEST",
+              1: "SEGMENT",
+              2: "LICENSE",
+              3: "APP_MANIFEST",
+              4: "TIMING",
+            };
+            const readableType = typeNames[type] || `UNKNOWN(${type})`;
+
+            if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
+              console.groupCollapsed(`🔸 Shaka Response (${readableType})`);
+              console.log("status:", response.status);
+              console.log("url:", response.uri);
+              console.log("headers:", response.headers);
+
+              try {
+                const dataView = new Uint8Array(response.data || new ArrayBuffer(0));
+                console.log("response data length:", dataView.length);
+                const preview = dataView.slice(0, 120);
+                if (preview.length) console.log("response data (first bytes):", preview);
+                if (typeof shaka !== "undefined" && shaka.util && shaka.util.Uint8ArrayUtils) {
+                  try {
+                    const b64 = shaka.util.Uint8ArrayUtils.toStandardBase64(preview);
+                    console.log("response base64 preview:", b64);
+                  } catch (e) {
+                    console.log("could not base64 preview response:", e);
+                  }
+                }
+              } catch (e) {
+                console.log("could not inspect response.data", e);
+              }
+
+              console.groupEnd();
+            }
+          } catch (e) {
+            console.error("Error in registerResponseFilter:", e);
+          }
+        });
+      await loadSource(player);
+    } catch (err) {
+      console.error("💥 Failed to initialize Shaka Player:", err);
+    }
+  };
 
   initShaka();
 
+  // Cleanup
   return () => {
-    playerRef.current?.destroy();
-    playerRef.current = null;
+    if (playerRef.current) {
+      playerRef.current.destroy();
+      playerRef.current = null;
+    }
   };
 }, [isClient, source]);
 
-
-// Load source with Shaka Player
+// ─────────────────────────────────────────────
+// LOAD SOURCE FUNCTION
+// ─────────────────────────────────────────────
 const loadSource = async (player) => {
   try {
     setLoading(true);
-    const shaka = await import('shaka-player/dist/shaka-player.ui.js');
+    const shaka = await import("shaka-player/dist/shaka-player.ui.js");
 
-    // Safe HLS/DASH detection
     const support = shaka.Player.probeSupport?.();
-    const isHlsSupported = support?.supportedManifestTypes?.includes('hls') ?? false;
+    const isHlsSupported = support?.supportedManifestTypes?.includes("hls") ?? false;
 
-    const manifestUri = isHlsSupported 
+    const manifestUri = isHlsSupported
       ? `${cdnDomain}/${source}/hls/1080p.m3u8`
       : `${cdnDomain}/${source}/1080p.mpd`;
-console.log("1")
 
-
+    console.log("📡 Loading manifest:", manifestUri);
     await player.load(manifestUri);
+    console.log("✅ Video loaded successfully!");
 
-    
-    console.log("The video has now been loaded!");
-    const audioTracks = player.getVariantTracks();
-     console.log("Audio tracks available:", audioTracks);
-console.log(player.getVariantTracks()); // video+audio variants
-console.log(player.getTextTracks());    // subtitles/captions
-console.log(player.getAudioLanguages());
-player.selectAudioLanguage('und', true);
+    // Log available tracks
+    console.log("Variant Tracks:", player.getVariantTracks());
+    console.log("Text Tracks:", player.getTextTracks());
+    console.log("Audio Languages:", player.getAudioLanguages());
 
-    setLoading(false);
+    player.selectAudioLanguage("und", true);
 
+    // Video element reference
     const video = videoRef.current;
+    if (!video) return;
 
-    // Event listeners
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('durationchange', handleDurationChange);
-    video.addEventListener('ended', handleEnded);
-    video.addEventListener('waiting', handleBuffer);
-    video.addEventListener('playing', handleBufferEnd);
-    video.addEventListener('canplay', handleReady);
+    // Setup event listeners
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("ended", handleEnded);
+    video.addEventListener("waiting", handleBuffer);
+    video.addEventListener("playing", handleBufferEnd);
+    video.addEventListener("canplay", handleReady);
 
-    // Initial settings
+    // Initial video settings
     video.volume = volume;
     video.playbackRate = playbackSpeed;
-
     if (lastPositon > 0) video.currentTime = lastPositon;
 
+    // Autoplay if needed
     if (autoPlay && firstPlay) {
       setFirstPlay(false);
       setPlaying(true);
       onPlayChange(true);
       await video.play();
-  
     }
 
+    setLoading(false);
   } catch (error) {
-    console.error("Error loading video:", error);
+    console.error("❌ Error loading video:", error);
     setLoading(false);
   }
 };
+
 
 
   // Player error handler
