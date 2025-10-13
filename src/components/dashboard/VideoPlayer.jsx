@@ -289,19 +289,30 @@ useEffect(() => {
 const loadSource = async (player) => {
   try {
     setLoading(true);
-    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
- const support = await shaka.Player.probeSupport();
-    const isHlsSupported = support?.manifest?.hls ?? false;
-    
-    console.log("HLS Support:", isHlsSupported);
-    console.log("Full support info:", support);
+  const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
 
-    const manifestUri = isHlsSupported
-      ? `${cdnDomain}/${source}/hls/1080p.m3u8`
-      : `${cdnDomain}/${source}/1080p.mpd`;
+// Alternative browser detection
+function getSupportedFormat() {
+  const userAgent = navigator.userAgent.toLowerCase();
+  
+  // Safari and iOS devices typically have better HLS support
+  const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+  const isIOS = /ipad|iphone|ipod/.test(userAgent);
+  
+  if (isSafari || isIOS) {
+    return "hls";
+  }
+  
+  // Modern Chrome, Firefox, Edge typically support both
+  return "dash";
+}
 
-    console.log("Using manifest:", manifestUri);
+const format = getSupportedFormat();
+const manifestUri = format === "hls" 
+  ? `${cdnDomain}/${source}/hls/1080p.m3u8`
+  : `${cdnDomain}/${source}/1080p.mpd`;
 
+console.log("Selected format:", format, "URL:", manifestUri);
     await player.load(manifestUri);
 
     const video = videoRef.current;
