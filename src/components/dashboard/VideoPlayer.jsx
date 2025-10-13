@@ -339,17 +339,17 @@ useEffect(() => {
         }
       });
 
-      // Add networking engine event listener for all requests
-      player.getNetworkingEngine().subscribe((type, detail) => {
-        if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
-          console.log("Networking Engine License Event:", {
-            type: detail.type,
-            url: detail.request.uris?.[0],
-            method: detail.request.method,
-            headers: detail.request.headers
-          });
-        }
-      });
+      // // Add networking engine event listener for all requests
+      // player.getNetworkingEngine().subscribe((type, detail) => {
+      //   if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
+      //     console.log("Networking Engine License Event:", {
+      //       type: detail.type,
+      //       url: detail.request.uris?.[0],
+      //       method: detail.request.method,
+      //       headers: detail.request.headers
+      //     });
+      //   }
+      // });
 
       // Load video source
       await loadSource(player);
