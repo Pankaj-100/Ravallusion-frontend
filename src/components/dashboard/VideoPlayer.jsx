@@ -187,7 +187,7 @@ useEffect(() => {
         if (initDataType === "skd") {
           const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
           const contentId = skdUri.split("skd://")[1]?.substring(0, 32) || source;
-          
+          console.log("FairPlay Init Data substring - Content ID:", contentId);
           // Store contentId globally for request filter
           if (typeof window !== 'undefined') {
             window.contentId = contentId;
@@ -225,6 +225,8 @@ useEffect(() => {
               const originalPayload = new Uint8Array(request.body);
               const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
               const contentId = window.contentId || source;
+
+              console.log("FairPlay License Request - Content ID:", contentId);
               
               request.body = shaka.util.StringUtils.toUTF8(
                 `spc=${base64Payload}&assetId=${contentId}`
@@ -245,10 +247,13 @@ useEffect(() => {
               response.uri?.includes("fps")) {
             
             if (response.data) {
+
               // FairPlay licenses come as base64 text that needs conversion to binary
               const responseText = shaka.util.StringUtils.fromUTF8(response.data);
               const trimmedResponse = responseText.trim();
               response.data = shaka.util.Uint8ArrayUtils.fromBase64(trimmedResponse).buffer;
+
+              console.log("FairPlay License Response transformed successfully.",response.data);
             }
           }
         } catch (e) {
