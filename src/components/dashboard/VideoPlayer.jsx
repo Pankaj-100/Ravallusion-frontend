@@ -130,47 +130,45 @@ useEffect(() => {
       const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
       console.log("🎬 Shaka imported successfully");
 
-      // Install polyfills
       shaka.polyfill.installAll();
-      console.log("✅ Shaka polyfills installed");
+      console.log("✅ Polyfills installed");
 
-      // Install Apple Media Keys for FairPlay
+      // Install Apple Media Keys for FairPlay (Safari)
       if (shaka.polyfill.PatchedMediaKeysApple) {
         shaka.polyfill.PatchedMediaKeysApple.install();
-        console.log("✅ PatchedMediaKeysApple installed for FairPlay");
+        console.log("✅ PatchedMediaKeysApple installed");
       }
 
       if (!shaka.Player.isBrowserSupported()) {
-        console.error("Shaka Player is not supported on this browser.");
+        console.error("❌ Shaka Player not supported in this browser");
         return;
       }
-      console.log("✅ Shaka Player is supported");
 
       const player = new shaka.Player(videoRef.current);
       playerRef.current = player;
 
       if (typeof window !== 'undefined') window.player = player;
 
-      // Error listener
-      player.addEventListener("error", (e) => {
-        console.error("Shaka Player Error:", e.detail);
-      });
+      // ---- DEBUG HOOK ----
+      player.addEventListener("error", (e) => console.error("🚨 Shaka Error:", e.detail));
+      player.addEventListener("drmsessionupdate", () => console.log("🔑 DRM session updated"));
+      player.addEventListener("drmmessage", () => console.log("📨 DRM message event triggered"));
+      player.addEventListener("emsg", (e) => console.log("📡 EMSG Event:", e));
 
-      // FairPlay Certificate Function
+      // Get FairPlay Certificate
       const getFairPlayCertificate = async () => {
-        const certUrl =
-          "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
-        console.log("Fetching FairPlay certificate from:", certUrl);
+        const certUrl = "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
+        console.log("📥 Fetching FairPlay cert:", certUrl);
         const res = await fetch(certUrl);
-        if (!res.ok) throw new Error(`Certificate fetch failed: ${res.status}`);
+        if (!res.ok) throw new Error(`❌ FairPlay cert fetch failed: ${res.status}`);
         const cert = await res.arrayBuffer();
-        console.log("✅ FairPlay certificate fetched:", cert.byteLength, "bytes");
+        console.log("✅ FairPlay cert loaded:", cert.byteLength, "bytes");
         return new Uint8Array(cert);
       };
 
       const fairPlayCert = await getFairPlayCertificate();
 
-      // Configure DRM
+      // DRM Configuration
       player.configure({
         drm: {
           servers: {
@@ -183,104 +181,95 @@ useEffect(() => {
           },
         },
       });
-      console.log("✅ DRM configured for Widevine, PlayReady, FairPlay");
+      console.log("✅ DRM servers configured");
 
-      // Init Data Transform for FairPlay
-      player.configure('drm.initDataTransform', (initData, initDataType) => {
-        console.log("drm.initDataTransform called with type:", initDataType);
+      // FairPlay initDataTransform
+      player.configure("drm.initDataTransform", (initData, initDataType) => {
+        console.log("🎬 drm.initDataTransform called:", initDataType);
         if (initDataType === "skd") {
           const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
+          console.log("🔗 SKD URI:", skdUri);
           const contentId = skdUri.split("skd://")[1]?.substring(0, 32) || source;
-          console.log("FairPlay Init Data - Content ID:", contentId);
-
+          console.log("🆔 FairPlay Content ID:", contentId);
           if (typeof window !== 'undefined') window.contentId = contentId;
 
-          const transformedData = shaka.util.FairPlayUtils.initDataTransform(
+          const transformed = shaka.util.FairPlayUtils.initDataTransform(
             initData,
             contentId,
             fairPlayCert
           );
-          console.log("Transformed initData for FairPlay:", transformedData);
-          return transformedData;
+          console.log("🔧 Transformed initData:", transformed);
+          return transformed;
         }
         return initData;
       });
 
-      // Request Filter
+      // License Request Filter
       player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
-        console.log("Request filter triggered. Type:", type, "URIs:", request.uris);
+        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+        console.log("🎯 License Request Triggered →", request.uris[0]);
+
         try {
-          if (type === shaka.net.NetworkingEngine.RequestType.LICENSE) {
-            const res = await fetch(
-              `https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`
+          const res = await fetch(
+            `https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`
+          );
+          const data = await res.json();
+
+          if (data.headers?.["x-keyos-authorization"]) {
+            request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
+          }
+
+          if (request.uris[0]?.includes("fps")) {
+            const originalPayload = new Uint8Array(request.body);
+            const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
+            const contentId = window.contentId || source;
+
+            console.log("FairPlay License Request - Content ID:", contentId);
+            request.body = shaka.util.StringUtils.toUTF8(
+              `spc=${base64Payload}&assetId=${contentId}`
             );
-            if (!res.ok) throw new Error(`License header fetch failed: ${res.status}`);
-            const data = await res.json();
-
-            if (data.headers?.["x-keyos-authorization"]) {
-              request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
-            }
-
-            if (request.uris[0]?.includes("fps")) {
-              const originalPayload = new Uint8Array(request.body);
-              const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
-              const contentId = window.contentId || source;
-
-              console.log("FairPlay License Request - Content ID:", contentId);
-              console.log("Original request body length:", originalPayload.byteLength);
-
-              request.body = shaka.util.StringUtils.toUTF8(
-                `spc=${base64Payload}&assetId=${contentId}`
-              );
-              request.headers["Content-Type"] = "text/plain";
-
-              console.log("Modified FairPlay request body:", request.body);
-            }
+            request.headers["Content-Type"] = "text/plain";
+            console.log("📤 Final FairPlay Request Body Prepared");
           }
         } catch (err) {
-          console.error("Request filter error:", err);
+          console.error("❌ License Request Filter Error:", err);
         }
       });
 
-      // Response Filter
+      // License Response Filter
       player.getNetworkingEngine().registerResponseFilter((type, response) => {
-        console.log("Response filter triggered. Type:", type, "URI:", response.uri);
+        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+        console.log("📥 License Response Filter Triggered:", response.uri);
         try {
-          if (type === shaka.net.NetworkingEngine.RequestType.LICENSE && response.uri?.includes("fps")) {
-            if (response.data) {
-              const responseText = shaka.util.StringUtils.fromUTF8(response.data);
-              const trimmedResponse = responseText.trim();
-              response.data = shaka.util.Uint8ArrayUtils.fromBase64(trimmedResponse).buffer;
-              console.log("FairPlay License Response transformed. Data byteLength:", response.data.byteLength);
-            }
+          if (response.uri?.includes("fps")) {
+            const responseText = shaka.util.StringUtils.fromUTF8(response.data);
+            const trimmed = responseText.trim();
+            response.data = shaka.util.Uint8ArrayUtils.fromBase64(trimmed).buffer;
+            console.log("✅ FairPlay License Response Transformed");
           }
-        } catch (e) {
-          console.error("Response filter error:", e);
+        } catch (err) {
+          console.error("❌ License Response Filter Error:", err);
         }
       });
 
-      // Load video source
+      // Load manifest
       await loadSource(player);
 
     } catch (err) {
-      console.error("Shaka init error:", err);
+      console.error("❌ Shaka Init Error:", err);
     }
   };
 
   initShaka();
 
-  // Cleanup
   return () => {
-    if (playerRef.current) {
-      playerRef.current.destroy();
-      playerRef.current = null;
-    }
-    if (typeof window !== 'undefined') {
-      delete window.player;
-      delete window.contentId;
-    }
+    if (playerRef.current) playerRef.current.destroy();
+    playerRef.current = null;
+    delete window.player;
+    delete window.contentId;
   };
 }, [isClient, source]);
+
 
 // Load Source Function
 const loadSource = async (player) => {
