@@ -155,6 +155,7 @@ useEffect(() => {
         console.error("Shaka Player Error:", e.detail);
       });
 
+      console.log("Setting up DRM...");
       // FairPlay Certificate Function
       const getFairPlayCertificate = async () => {
         const certUrl = "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
@@ -181,6 +182,7 @@ useEffect(() => {
           },
         },
       });
+      console.log("1")
 
       // Set up FairPlay init data transform
       player.configure('drm.initDataTransform', (initData, initDataType) => {
@@ -201,6 +203,8 @@ useEffect(() => {
         }
         return initData;
       });
+
+      console.log("2")
 
       // Request Filter for all DRM systems
       player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
