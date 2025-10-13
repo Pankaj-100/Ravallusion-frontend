@@ -252,7 +252,7 @@ useEffect(() => {
             }
           }
         } catch (e) {
-         console.error("Response filter error:", e);
+         console.error("Response filter error:", e);  
         }
       });
 
@@ -284,15 +284,18 @@ useEffect(() => {
 const loadSource = async (player) => {
   try {
     setLoading(true);
-    const shaka = await import("shaka-player/dist/shaka-player.ui.js");
-
-    // Check browser support for HLS vs DASH
-    const support = await shaka.Player.probeSupport?.();
-    const isHlsSupported = support?.supportedManifestTypes?.includes("hls") ?? false;
+    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+ const support = await shaka.Player.probeSupport();
+    const isHlsSupported = support?.manifest?.hls ?? false;
+    
+    console.log("HLS Support:", isHlsSupported);
+    console.log("Full support info:", support);
 
     const manifestUri = isHlsSupported
       ? `${cdnDomain}/${source}/hls/1080p.m3u8`
       : `${cdnDomain}/${source}/1080p.mpd`;
+
+    console.log("Using manifest:", manifestUri);
 
     await player.load(manifestUri);
 
