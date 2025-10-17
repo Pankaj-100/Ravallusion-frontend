@@ -161,7 +161,7 @@ useEffect(() => {
         return new Uint8Array(cert);
       };
 
-      const fairPlayCert = await getFairPlayCertificate();
+      const cert = await getFairPlayCertificate();
 
       // DRM configuration
       player.configure({
@@ -172,21 +172,25 @@ useEffect(() => {
             "com.apple.fps.1_0": "https://fairplay.keyos.com/api/v4/getLicense",
           },
           advanced: {
-            "com.apple.fps.1_0": { serverCertificate: fairPlayCert },
+            "com.apple.fps.1_0": { serverCertificate: cert },
           },
         },
       });
 
       // FairPlay initDataTransform
-      player.configure("drm.initDataTransform", (initData, initDataType) => {
-        if (initDataType === "skd") {
-          const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
-          const contentId = skdUri.split("skd://")[1].substring(0, 32);
-          if (typeof window !== "undefined") window.contentId = contentId;
-          return shaka.util.FairPlayUtils.initDataTransform(initData, contentId, fairPlayCert);
-        }
-        return initData;
-      });
+player.configure('drm.initDataTransform', (initData, initDataType) => {
+  if (initDataType === 'skd') {
+    const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
+    const contentId = skdUri.split('skd://')[1];
+    if (typeof window !== 'undefined') window.contentId = contentId;
+
+    const cert = player.drmInfo()?.serverCertificate || cert;
+
+    return shaka.util.FairPlayUtils.initDataTransform(initData, contentId, cert);
+  }
+
+  return initData;
+});
 
       // LICENSE REQUEST FILTER
       player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
@@ -212,7 +216,7 @@ useEffect(() => {
         }
       });
 
-      // LICENSE RESPONSE FILTER - FIXED
+      // LICENSE RESPONSE FILTER 
       player.getNetworkingEngine().registerResponseFilter((type, response) => {
         if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
