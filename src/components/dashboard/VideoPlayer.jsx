@@ -157,7 +157,7 @@ useEffect(() => {
       };
 
       const cert = await getFairPlayCertificate();
-      let contentId: string = "";
+      let contentId = "";
 
       // DRM configuration
       player.configure({
