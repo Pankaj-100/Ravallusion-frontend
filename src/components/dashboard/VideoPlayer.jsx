@@ -146,31 +146,18 @@ useEffect(() => {
 
       const player = new shaka.Player(videoRef.current);
       playerRef.current = player;
-      if (typeof window !== "undefined") window.player = player;
 
-      // ---- DEBUG HOOKS ----
-      player.addEventListener("error", (e) => {
-        const err = e.detail;
-        console.error("🚨 Shaka Error:", err);
+      if (typeof window !== 'undefined') window.player = player;
 
-        if (err.code === 3016) {
-          console.error("💥 Safari Decode Error (3016): Media failed to decode.");
-          console.warn(
-            "🔍 Likely cause: Safari cannot decode .ts segments with FairPlay DRM.\n" +
-              "✅ Fix: Repackage HLS to use fMP4 (.m4s) segments with 'cbcs' protection.\n" +
-              "📜 Manifest being used:", player.getManifestUri()
-          );
-        }
-      });
-
-      player.addEventListener("drmsessionupdate", () => console.log("🔑 DRM session updated"));
-      player.addEventListener("drmmessage", () => console.log("📨 DRM message event triggered"));
+      // ---- DEBUG HOOK ----
+      player.addEventListener("error", (e) => console.error(" Shaka Error:", e.detail));
+      player.addEventListener("drmsessionupdate", () => console.log(" DRM session updated"));
+      player.addEventListener("drmmessage", () => console.log("DRM message event triggered"));
       player.addEventListener("emsg", (e) => console.log("📡 EMSG Event:", e));
 
-      // ---- FAIRPLAY CERTIFICATE ----
+      // Get FairPlay Certificate
       const getFairPlayCertificate = async () => {
-        const certUrl =
-          "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
+        const certUrl = "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
         console.log("📥 Fetching FairPlay cert:", certUrl);
         const res = await fetch(certUrl);
         if (!res.ok) throw new Error(`❌ FairPlay cert fetch failed: ${res.status}`);
@@ -181,7 +168,7 @@ useEffect(() => {
 
       const fairPlayCert = await getFairPlayCertificate();
 
-      // ---- DRM CONFIGURATION ----
+      // DRM Configuration
       player.configure({
         drm: {
           servers: {
@@ -196,7 +183,7 @@ useEffect(() => {
       });
       console.log("✅ DRM servers configured");
 
-      // ---- FAIRPLAY INITDATA TRANSFORM ----
+      // FairPlay initDataTransform
       player.configure("drm.initDataTransform", (initData, initDataType) => {
         console.log("🎬 drm.initDataTransform called:", initDataType);
         if (initDataType === "skd") {
@@ -204,19 +191,20 @@ useEffect(() => {
           console.log("🔗 SKD URI:", skdUri);
           const contentId = skdUri.split("skd://")[1]?.substring(0, 32) || source;
           console.log("🆔 FairPlay Content ID:", contentId);
-          if (typeof window !== "undefined") window.contentId = contentId;
+          if (typeof window !== 'undefined') window.contentId = contentId;
 
           const transformed = shaka.util.FairPlayUtils.initDataTransform(
             initData,
             contentId,
             fairPlayCert
           );
+          console.log("🔧 Transformed initData:", transformed);
           return transformed;
         }
         return initData;
       });
 
-      // ---- LICENSE REQUEST FILTER ----
+      // License Request Filter
       player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
         if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
         console.log("🎯 License Request Triggered →", request.uris[0]);
@@ -236,19 +224,22 @@ useEffect(() => {
             const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
             const contentId = window.contentId || source;
 
+            console.log("FairPlay License Request - Content ID:", contentId);
             request.body = shaka.util.StringUtils.toUTF8(
               `spc=${base64Payload}&assetId=${contentId}`
             );
             request.headers["Content-Type"] = "text/plain";
+            console.log("📤 Final FairPlay Request Body Prepared");
           }
         } catch (err) {
           console.error("❌ License Request Filter Error:", err);
         }
       });
 
-      // ---- LICENSE RESPONSE FILTER ----
+      // License Response Filter
       player.getNetworkingEngine().registerResponseFilter((type, response) => {
         if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+        console.log("📥 License Response Filter Triggered:", response.uri);
         try {
           if (response.uri?.includes("fps")) {
             const responseText = shaka.util.StringUtils.fromUTF8(response.data);
@@ -261,8 +252,9 @@ useEffect(() => {
         }
       });
 
-      // ---- LOAD MANIFEST ----
+      // Load manifest
       await loadSource(player);
+
     } catch (err) {
       console.error("❌ Shaka Init Error:", err);
     }
@@ -278,11 +270,13 @@ useEffect(() => {
   };
 }, [isClient, source]);
 
-// ---- LOAD SOURCE FUNCTION ----
+
+// Load Source Function
 const loadSource = async (player) => {
   try {
     setLoading(true);
-    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+      const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+
     const support = await shaka.Player.probeSupport();
     console.log("Full Shaka support info:", support);
 
@@ -291,25 +285,13 @@ const loadSource = async (player) => {
 
     const isHlsSupported = support?.manifest?.hls ?? false;
 
-    const manifestUri =
-      isHlsSupported || isSafari
-        ? `${cdnDomain}/${source}/hls/1080p.m3u8`
-        : `${cdnDomain}/${source}/1080p.mpd`;
+    const manifestUri = isHlsSupported || isSafari
+      ? `${cdnDomain}/${source}/hls/1080p.m3u8`
+      : `${cdnDomain}/${source}/1080p.mpd`;
     console.log("Using manifest URI:", manifestUri);
 
-    // Debug: check if the manifest likely contains TS segments
-    if (manifestUri.endsWith(".m3u8")) {
-      const manifestText = await fetch(manifestUri).then((r) => r.text());
-      if (manifestText.includes(".ts")) {
-        console.warn(
-          "⚠️ Manifest contains .ts segments — Safari DRM playback may fail (Error 3016).\n" +
-            "👉 Repackage with fMP4 (.m4s) segments for FairPlay support."
-        );
-      }
-    }
-
     await player.load(manifestUri);
-    console.log("✅ Video source loaded successfully:", manifestUri);
+    console.log("✅ Video source loaded");
 
     const video = videoRef.current;
     if (!video) return;
@@ -338,11 +320,10 @@ const loadSource = async (player) => {
 
     setLoading(false);
   } catch (error) {
-    console.error("❌ loadSource error:", error);
+    // console.error("loadSource error:", error);
     setLoading(false);
   }
 };
-
 
 
 
