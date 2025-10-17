@@ -255,10 +255,7 @@ useEffect(() => {
         console.log("📥 License Response from:", response.uri);
 
         try {
-        if (
-  type === shaka.net.NetworkingEngine.RequestType.LICENSE &&
-  request.drmInfos?.some(drm => drm.keySystem === 'com.apple.fps.1_0')
-) {
+        if (response.uri?.includes("fairplay.keyos.com")) {
             console.log("🍎 Processing FairPlay license response...");
 
             // Convert response to text and trim whitespace - EXACTLY as in documentation
