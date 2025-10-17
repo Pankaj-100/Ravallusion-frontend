@@ -213,34 +213,61 @@ useEffect(() => {
       });
 
       // LICENSE RESPONSE FILTER - FIXED
-      player.getNetworkingEngine().registerResponseFilter((type, response) => {
-        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+     // LICENSE RESPONSE FILTER - FIXED
+player.getNetworkingEngine().registerResponseFilter((type, response) => {
+  if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
-        try {
-          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-          if (!isSafari) return;
+  try {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (!isSafari) return;
 
-          let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
-          let licenseData = responseText;
+    console.log("📥 License Response Received - Status:", response.status);
+    console.log("📦 Response data size:", response.data?.byteLength, "bytes");
 
-          if (responseText.startsWith("{")) {
-            try {
-              const json = JSON.parse(responseText);
-              licenseData = (json.ckc || json.license || json.data || "").trim();
-            } catch (err) {
-              console.warn("JSON parse error in license response, using raw response");
-            }
-          }
+    let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
+    console.log("📄 Raw response text length:", responseText.length);
+    console.log("📄 Response preview:", responseText.substring(0, 200));
 
-          if (!licenseData) throw new Error("License data is empty");
+    let licenseData = responseText;
 
-          response.data = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
-          console.log("FairPlay license response processed, bytes:", response.data.byteLength);
+    // If it's JSON, try to parse it
+    if (responseText.startsWith("{")) {
+      try {
+        const json = JSON.parse(responseText);
+        licenseData = json.ckc || json.license || json.data || responseText;
+        console.log("📋 Extracted license data from JSON");
+      } catch (err) {
+        console.warn("⚠️ JSON parse error, using raw response");
+        licenseData = responseText;
+      }
+    }
 
-        } catch (err) {
-          console.error("License Response Filter Error:", err);
-        }
-      });
+    // Check if licenseData is valid
+    if (!licenseData || licenseData.length === 0) {
+      console.error("❌ License data is empty or invalid");
+      return; // Don't transform if no license data
+    }
+
+    console.log("🔧 License data to decode, length:", licenseData.length);
+
+    // Decode the base64 license
+    try {
+      const licenseBuffer = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
+      response.data = licenseBuffer;
+      console.log("✅ FairPlay license response transformed successfully");
+      console.log("📦 Final license size:", licenseBuffer.byteLength, "bytes");
+    } catch (base64Error) {
+      console.error("❌ Base64 decode error:", base64Error);
+      // If base64 fails, try to use the original response data
+      console.log("🔄 Using original response data due to base64 error");
+      response.data = shaka.util.StringUtils.toUTF8(responseText);
+    }
+
+  } catch (err) {
+    console.error("❌ License Response Filter Error:", err);
+    // Don't throw - let Shaka handle the original response
+  }
+});
 
       await loadSource(player);
 
@@ -260,20 +287,31 @@ useEffect(() => {
 }, [isClient, source]);
 
 // Load Source
+// Load Source - Add more debugging
 const loadSource = async (player) => {
   try {
     setLoading(true);
     const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
     const support = await shaka.Player.probeSupport();
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    console.log("🔍 Safari Detection:", isSafari);
+    console.log("🔍 HLS Support:", support?.manifest?.hls);
+
     const manifestUri = isSafari || support?.manifest?.hls
       ? `${cdnDomain}/${source}/hls/1080p.m3u8`
       : `${cdnDomain}/${source}/1080p.mpd`;
 
+    console.log("📦 Loading manifest:", manifestUri);
+
     await player.load(manifestUri);
+    
     const video = videoRef.current;
-    console.log("🎬 Video source loaded:", video);
-        // Log detailed track information
+    console.log("✅ Video source loaded");
+    console.log("🎬 Video element readyState:", video.readyState);
+    console.log("🎬 Video element networkState:", video.networkState);
+
+    // Enhanced track logging
     const tracks = player.getVariantTracks();
     const currentTrack = player.getVariantTracks().find(t => t.active);
     
@@ -284,32 +322,45 @@ const loadSource = async (player) => {
         codecs: currentTrack.codecs,
         width: currentTrack.width,
         height: currentTrack.height,
-        frameRate: currentTrack.frameRate
-      } : 'No active track',
-      allTracks: tracks.map(t => ({
-        id: t.id,
-        bandwidth: t.bandwidth,
-        codecs: t.codecs,
-        width: t.width,
-        height: t.height,
-        active: t.active
-      }))
+        frameRate: currentTrack.frameRate,
+        active: currentTrack.active
+      } : 'No active track'
     });
 
-   
     if (!video) {
       console.error("❌ Video element not found");
       return;
     }
-    if (!video) return;
 
-    // Video events
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("durationchange", handleDurationChange);
-    video.addEventListener("ended", handleEnded);
-    video.addEventListener("waiting", handleBuffer);
-    video.addEventListener("playing", handleBufferEnd);
-    video.addEventListener("canplay", handleReady);
+    // Add video element error listener
+    video.addEventListener("error", function(e) {
+      console.error("🎬 Native Video Element Error:", {
+        error: video.error,
+        readyState: video.readyState,
+        networkState: video.networkState
+      });
+    });
+
+    // Add more video events for debugging
+    video.addEventListener("loadedmetadata", () => {
+      console.log("📹 Video metadata loaded - Duration:", video.duration);
+      console.log("📹 Video dimensions:", video.videoWidth, "x", video.videoHeight);
+    });
+
+    video.addEventListener("canplay", () => {
+      console.log("✅ Video can play");
+      handleReady();
+    });
+
+    video.addEventListener("playing", () => {
+      console.log("▶️ Video is now playing!");
+      handleBufferEnd();
+    });
+
+    video.addEventListener("waiting", () => {
+      console.log("⏳ Video waiting/buffering");
+      handleBuffer();
+    });
 
     video.volume = volume;
     video.playbackRate = playbackSpeed;
@@ -319,16 +370,21 @@ const loadSource = async (player) => {
       setFirstPlay(false);
       setPlaying(true);
       onPlayChange(true);
-      try { await video.play(); } catch (err) { console.error("Autoplay failed:", err); }
+      try { 
+        console.log("▶️ Attempting autoplay...");
+        await video.play(); 
+        console.log("✅ Autoplay successful");
+      } catch (err) { 
+        console.error("❌ Autoplay failed:", err); 
+      }
     }
 
     setLoading(false);
   } catch (err) {
-    console.error("loadSource error:", err);
+    console.error("❌ loadSource error:", err);
     setLoading(false);
   }
 };
-
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   };
