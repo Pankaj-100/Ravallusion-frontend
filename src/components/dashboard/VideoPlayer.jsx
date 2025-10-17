@@ -131,40 +131,39 @@ useEffect(() => {
       console.log("🎬 Shaka imported successfully");
 
       shaka.polyfill.installAll();
-      console.log("✅ Polyfills installed");
+      console.log(" Polyfills installed");
 
       if (shaka.polyfill.PatchedMediaKeysApple) {
         shaka.polyfill.PatchedMediaKeysApple.install();
-        console.log("✅ PatchedMediaKeysApple installed");
+        console.log(" PatchedMediaKeysApple installed");
       }
 
       if (!shaka.Player.isBrowserSupported()) {
-        console.error("❌ Shaka Player not supported in this browser");
+        console.error(" Shaka Player not supported in this browser");
         return;
       }
 
       const player = new shaka.Player(videoRef.current);
       playerRef.current = player;
-
       if (typeof window !== "undefined") window.player = player;
 
-      // Debug events
+      // Event listeners
       player.addEventListener("error", (e) => console.error("Shaka Error:", e.detail));
       player.addEventListener("drmsessionupdate", () => console.log("DRM session updated"));
       player.addEventListener("drmmessage", () => console.log("DRM message triggered"));
 
-      // Fetch FairPlay certificate
+      // FairPlay certificate
       const getFairPlayCertificate = async () => {
         const certUrl = "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
         const res = await fetch(certUrl);
-        if (!res.ok) throw new Error(`❌ FairPlay cert fetch failed: ${res.status}`);
+        if (!res.ok) throw new Error(` FairPlay cert fetch failed: ${res.status}`);
         const cert = await res.arrayBuffer();
         return new Uint8Array(cert);
       };
 
       const fairPlayCert = await getFairPlayCertificate();
 
-      // DRM configuration - EXACTLY as in documentation
+      // DRM configuration
       player.configure({
         drm: {
           servers: {
@@ -178,129 +177,75 @@ useEffect(() => {
         },
       });
 
-      // FairPlay initDataTransform - EXACTLY as in documentation
+      // FairPlay initDataTransform
       player.configure("drm.initDataTransform", (initData, initDataType) => {
         if (initDataType === "skd") {
-          // 'initData' is a buffer containing an "skd://" URL as a UTF-8 string
           const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
           const contentId = skdUri.split("skd://")[1].substring(0, 32);
           if (typeof window !== "undefined") window.contentId = contentId;
-
-          console.log("🔗 SKD URI:", skdUri);
-          console.log("🆔 Content ID:", contentId);
-
           return shaka.util.FairPlayUtils.initDataTransform(initData, contentId, fairPlayCert);
         }
         return initData;
       });
 
-      // LICENSE REQUEST FILTER - UPDATED TO MATCH DOCUMENTATION EXACTLY
+      // LICENSE REQUEST FILTER
       player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
         if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
-
-        console.log("🎯 License Request for:", request.uris[0]);
-
         try {
-          // Get authorization headers from your API
           const res = await fetch(`https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`);
           const data = await res.json();
-
-          // Add authorization header if available
           if (data.headers?.["x-keyos-authorization"]) {
             request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
-            console.log("✅ Added x-keyos-authorization header");
           }
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    console.log("Is Safari:", isSafari);
-          // Handle FairPlay license requests
-          if (isSafari) {
-            console.log("🍎 Processing FairPlay license request...");
 
-            // Convert the SPC to base64 - EXACTLY as in documentation
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (isSafari) {
             const originalPayload = new Uint8Array(request.body);
             const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
             const contentId = window.contentId || source;
-
-            console.log("📊 Request details:", {
-              contentId: contentId,
-              spcSize: originalPayload.length,
-              base64Length: base64Payload.length
-            });
-
-            // FIXED: Create request body EXACTLY as shown in documentation
-            // Documentation uses: 'spc=' + base64Payload + '&assetId=' + contentId
-            const params = 'spc=' + base64Payload + '&assetId=' + contentId;
-            
-            console.log("📤 Request body preview:", params.substring(0, 100) + "...");
-            console.log("📤 Full request body length:", params.length);
-
-            // Update request EXACTLY as in documentation
+            const params = `spc=${base64Payload}&assetId=${contentId}`;
             request.body = shaka.util.StringUtils.toUTF8(params);
             request.headers["Content-Type"] = "text/plain";
-
-            console.log("✅ FairPlay license request prepared according to documentation");
           }
-
         } catch (err) {
-          console.error("❌ License Request Filter Error:", err);
+          console.error("License Request Filter Error:", err);
         }
       });
 
-      // LICENSE RESPONSE FILTER - UPDATED TO MATCH DOCUMENTATION EXACTLY
+      // LICENSE RESPONSE FILTER - FIXED
       player.getNetworkingEngine().registerResponseFilter((type, response) => {
         if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
-        console.log("📥 License Response from:", response.uri);
-
         try {
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    console.log("Is Safari:", isSafari);
-          if (isSafari) {
-            console.log("🍎 Processing FairPlay license response...");
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (!isSafari) return;
 
-            // Convert response to text and trim whitespace - EXACTLY as in documentation
-            let responseText = shaka.util.StringUtils.fromUTF8(response.data);
-            responseText = responseText.trim();
+          let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
+          let licenseData = responseText;
 
-            console.log("📄 Raw response length:", responseText.length);
-            console.log("📄 Response preview:", responseText.substring(0, 200));
-
-            // Handle different response formats
-            let licenseData = responseText;
-            
-            // If response is JSON, extract the license data
-            if (responseText.startsWith('{')) {
-              try {
-                const jsonResponse = JSON.parse(responseText);
-                licenseData = jsonResponse.license || jsonResponse.ckc || jsonResponse.data || responseText;
-                console.log("📋 Extracted license data from JSON response");
-              } catch (jsonError) {
-                console.error("❌ JSON parse error, using raw response");
-                licenseData = responseText;
-              }
-            }
-
-            // Decode the base64-encoded data into the format the browser expects
-            // EXACTLY as in documentation: response.data = shaka.util.Uint8ArrayUtils.fromBase64(responseText).buffer;
+          if (responseText.startsWith("{")) {
             try {
-              response.data = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
-              console.log("✅ FairPlay license response transformed successfully");
-              console.log("📦 Final license size:", response.data.byteLength, "bytes");
-            } catch (base64Error) {
-              console.error("❌ Base64 decode error:", base64Error);
-              throw new Error("Failed to decode base64 license response");
+              const json = JSON.parse(responseText);
+              licenseData = (json.ckc || json.license || json.data || "").trim();
+            } catch (err) {
+              console.warn("JSON parse error in license response, using raw response");
             }
           }
+
+          if (!licenseData) throw new Error("License data is empty");
+
+          response.data = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
+          console.log("FairPlay license response processed, bytes:", response.data.byteLength);
+
         } catch (err) {
-          console.error("❌ License Response Filter Error:", err);
+          console.error("License Response Filter Error:", err);
         }
       });
 
-      // Load the manifest
       await loadSource(player);
 
     } catch (err) {
-      console.error("❌ Shaka Init Error:", err);
+      console.error("Shaka Init Error:", err);
     }
   };
 
@@ -314,32 +259,22 @@ useEffect(() => {
   };
 }, [isClient, source]);
 
-
-// Load Source Function
+// Load Source
 const loadSource = async (player) => {
   try {
     setLoading(true);
-      const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
-
+    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
     const support = await shaka.Player.probeSupport();
-    console.log("Full Shaka support info:", support);
-
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    console.log("Is Safari:", isSafari);
-
-    const isHlsSupported = support?.manifest?.hls ?? false;
-
-    const manifestUri = isHlsSupported || isSafari
+    const manifestUri = isSafari || support?.manifest?.hls
       ? `${cdnDomain}/${source}/hls/1080p.m3u8`
       : `${cdnDomain}/${source}/1080p.mpd`;
-    console.log("Using manifest URI:", manifestUri);
 
     await player.load(manifestUri);
-    console.log("✅ Video source loaded");
-
     const video = videoRef.current;
     if (!video) return;
 
+    // Video events
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("durationchange", handleDurationChange);
     video.addEventListener("ended", handleEnded);
@@ -355,16 +290,12 @@ const loadSource = async (player) => {
       setFirstPlay(false);
       setPlaying(true);
       onPlayChange(true);
-      try {
-        await video.play();
-      } catch (playError) {
-        console.error("Autoplay failed:", playError);
-      }
+      try { await video.play(); } catch (err) { console.error("Autoplay failed:", err); }
     }
 
     setLoading(false);
-  } catch (error) {
-    // console.error("loadSource error:", error);
+  } catch (err) {
+    console.error("loadSource error:", err);
     setLoading(false);
   }
 };
