@@ -212,7 +212,7 @@ useEffect(() => {
         }
       });
 
-      // LICENSE RESPONSE FILTER - FIXED
+     
      // LICENSE RESPONSE FILTER - FIXED
 player.getNetworkingEngine().registerResponseFilter((type, response) => {
   if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
@@ -226,12 +226,11 @@ player.getNetworkingEngine().registerResponseFilter((type, response) => {
 
     let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
     console.log("📄 Raw response text length:", responseText.length);
-    console.log("📄 Response preview:", responseText.substring(0, 200));
 
     let licenseData = responseText;
 
     // If it's JSON, try to parse it
-    if (responseText.startsWith("{")) {
+ 
       try {
         const json = JSON.parse(responseText);
         licenseData = json.ckc || json.license || json.data || responseText;
@@ -240,7 +239,7 @@ player.getNetworkingEngine().registerResponseFilter((type, response) => {
         console.warn("⚠️ JSON parse error, using raw response");
         licenseData = responseText;
       }
-    }
+    
 
     // Check if licenseData is valid
     if (!licenseData || licenseData.length === 0) {
