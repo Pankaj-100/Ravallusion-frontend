@@ -210,12 +210,10 @@ useEffect(() => {
             request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
             console.log("✅ Added x-keyos-authorization header");
           }
-
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    console.log("Is Safari:", isSafari);
           // Handle FairPlay license requests
-       if (
-  type === shaka.net.NetworkingEngine.RequestType.LICENSE &&
-  request.drmInfos?.some(drm => drm.keySystem === 'com.apple.fps.1_0')
-) {
+          if (isSafari) {
             console.log("🍎 Processing FairPlay license request...");
 
             // Convert the SPC to base64 - EXACTLY as in documentation
@@ -255,7 +253,9 @@ useEffect(() => {
         console.log("📥 License Response from:", response.uri);
 
         try {
-        if (response.uri?.includes("fairplay.keyos.com")) {
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    console.log("Is Safari:", isSafari);
+          if (isSafari) {
             console.log("🍎 Processing FairPlay license response...");
 
             // Convert response to text and trim whitespace - EXACTLY as in documentation
