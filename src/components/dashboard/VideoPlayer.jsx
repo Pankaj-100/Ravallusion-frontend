@@ -210,63 +210,28 @@ useEffect(() => {
       });
 
       // FIXED: License Request Filter
-      player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
-        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
-        
-        console.log("🎯 License Request Triggered →", request.uris[0]);
-        console.log("📦 Original request body size:", request.body?.byteLength, "bytes");
+  player.getNetworkingEngine().registerRequestFilter((type, request) => {
+  if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
-        try {
-          // Get license headers from your API
-          const res = await fetch(
-            `https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`
-          );
-          if (!res.ok) {
-            throw new Error(`License header API failed: ${res.status}`);
-          }
-          
-          const data = await res.json();
-          console.log("📋 License headers received:", data);
+  if (request.uris[0]?.includes("fps")) {
+    const spcUint8 = new Uint8Array(request.body);
+    const spcBase64 = shaka.util.Uint8ArrayUtils.toStandardBase64(spcUint8);
+    const contentId = window.contentId || source;
 
-          // Add authorization header
-          if (data.headers?.["x-keyos-authorization"]) {
-            request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
-            console.log("✅ Added x-keyos-authorization header");
-          }
+    // KeyOS expects raw string, DO NOT encodeURIComponent
+    const requestBody = `spc=${spcBase64}&assetId=${contentId}`;
 
-          // Handle FairPlay license request specifically
-          if (request.uris[0]?.includes("fps")) {
-            console.log("🍎 Processing FairPlay license request...");
-            
-            // Convert SPC to base64
-            const spcUint8 = new Uint8Array(request.body);
-            const spcBase64 = shaka.util.Uint8ArrayUtils.toStandardBase64(spcUint8);
-            const contentId = window.contentId || source;
+    // Convert to Uint8Array
+    request.body = shaka.util.StringUtils.toUTF8(requestBody);
 
-            console.log("📊 Request details:", {
-              contentId: contentId,
-              spcSize: spcUint8.length,
-              spcBase64Length: spcBase64.length
-            });
+    // Correct header
+    request.headers["Content-Type"] = "text/plain";
 
-            // FIX: Create proper request body according to KeyOS documentation
-            // The body should be a simple string with spc and assetId parameters
-            const requestBody = `spc=${spcBase64}&assetId=${contentId}`;
-            
-            console.log("📤 Final FairPlay request body length:", requestBody.length);
-            console.log("📤 Request body preview:", requestBody.substring(0, 100) + "...");
+    console.log("✅ Prepared FairPlay request body:", requestBody.substring(0, 100), "...");
+    console.log("📦 Body size (bytes):", new Uint8Array(request.body).length);
+  }
+});
 
-            // Update the request
-            request.body = shaka.util.StringUtils.toUTF8(requestBody);
-            request.headers["Content-Type"] = "text/plain";
-            
-            console.log("✅ FairPlay license request prepared");
-          }
-
-        } catch (err) {
-          console.error("❌ License Request Filter Error:", err);
-        }
-      });
 
       // FIXED: License Response Filter
       player.getNetworkingEngine().registerResponseFilter((type, response) => {
