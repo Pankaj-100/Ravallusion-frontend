@@ -212,7 +212,7 @@ useEffect(() => {
           }
 
           // Handle FairPlay license requests
-          if (request.uris[0]?.includes("fps")) {
+         
             console.log("🍎 Processing FairPlay license request...");
 
             // Convert the SPC to base64 - EXACTLY as in documentation
@@ -238,7 +238,7 @@ useEffect(() => {
             request.headers["Content-Type"] = "text/plain";
 
             console.log("✅ FairPlay license request prepared according to documentation");
-          }
+          
 
         } catch (err) {
           console.error("❌ License Request Filter Error:", err);
