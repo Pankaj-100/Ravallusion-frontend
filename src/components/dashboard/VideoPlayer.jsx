@@ -272,6 +272,7 @@ const loadSource = async (player) => {
 
     await player.load(manifestUri);
     const video = videoRef.current;
+    console.log("🎬 Video source loaded:", video);
     if (!video) return;
 
     // Video events
