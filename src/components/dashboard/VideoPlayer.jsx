@@ -212,28 +212,25 @@ useEffect(() => {
         }
       });
 
-     
-     // LICENSE RESPONSE FILTER - FIXED
-player.getNetworkingEngine().registerResponseFilter((type, response) => {
-  if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+      // LICENSE RESPONSE FILTER - FIXED
+      player.getNetworkingEngine().registerResponseFilter((type, response) => {
+        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
- 
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if (!isSafari) return;
+        try {
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (!isSafari) return;
 
-    console.log("📥 License Response Received - Status:", response.status);
-    console.log("📦 Response data size:", response.data?.byteLength, "bytes");
+          let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
+          let licenseData = responseText;
 
-    let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
-    console.log("📄 Raw response text length:", responseText.length);
+          response.data = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
+          console.log(" License response processed for FairPlay", response.data);
+        
 
-
-
-      response.data = shaka.util.Uint8ArrayUtils.fromBase64(responseText).buffer;
-    }
-
-
-);
+        } catch (err) {
+          console.error("License Response Filter Error:", err);
+        }
+      });
 
       await loadSource(player);
 
@@ -253,80 +250,28 @@ player.getNetworkingEngine().registerResponseFilter((type, response) => {
 }, [isClient, source]);
 
 // Load Source
-// Load Source - Add more debugging
 const loadSource = async (player) => {
   try {
     setLoading(true);
     const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
     const support = await shaka.Player.probeSupport();
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    
-    console.log("🔍 Safari Detection:", isSafari);
-    console.log("🔍 HLS Support:", support?.manifest?.hls);
-
     const manifestUri = isSafari || support?.manifest?.hls
       ? `${cdnDomain}/${source}/hls/1080p.m3u8`
       : `${cdnDomain}/${source}/1080p.mpd`;
 
-    console.log("📦 Loading manifest:", manifestUri);
-
     await player.load(manifestUri);
-    
     const video = videoRef.current;
-    console.log("✅ Video source loaded");
-    console.log("🎬 Video element readyState:", video.readyState);
-    console.log("🎬 Video element networkState:", video.networkState);
+    console.log("🎬 Video source loaded:", video);
+    if (!video) return;
 
-    // Enhanced track logging
-    const tracks = player.getVariantTracks();
-    const currentTrack = player.getVariantTracks().find(t => t.active);
-    
-    console.log("🎛️ Track Information:", {
-      totalTracks: tracks.length,
-      currentTrack: currentTrack ? {
-        bandwidth: currentTrack.bandwidth,
-        codecs: currentTrack.codecs,
-        width: currentTrack.width,
-        height: currentTrack.height,
-        frameRate: currentTrack.frameRate,
-        active: currentTrack.active
-      } : 'No active track'
-    });
-
-    if (!video) {
-      console.error("❌ Video element not found");
-      return;
-    }
-
-    // Add video element error listener
-    video.addEventListener("error", function(e) {
-      console.error("🎬 Native Video Element Error:", {
-        error: video.error,
-        readyState: video.readyState,
-        networkState: video.networkState
-      });
-    });
-
-    // Add more video events for debugging
-    video.addEventListener("loadedmetadata", () => {
-      console.log("📹 Video metadata loaded - Duration:", video.duration);
-      console.log("📹 Video dimensions:", video.videoWidth, "x", video.videoHeight);
-    });
-
-    video.addEventListener("canplay", () => {
-      console.log("✅ Video can play");
-      handleReady();
-    });
-
-    video.addEventListener("playing", () => {
-      console.log("▶️ Video is now playing!");
-      handleBufferEnd();
-    });
-
-    video.addEventListener("waiting", () => {
-      console.log("⏳ Video waiting/buffering");
-      handleBuffer();
-    });
+    // Video events
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("ended", handleEnded);
+    video.addEventListener("waiting", handleBuffer);
+    video.addEventListener("playing", handleBufferEnd);
+    video.addEventListener("canplay", handleReady);
 
     video.volume = volume;
     video.playbackRate = playbackSpeed;
@@ -336,21 +281,16 @@ const loadSource = async (player) => {
       setFirstPlay(false);
       setPlaying(true);
       onPlayChange(true);
-      try { 
-        console.log("▶️ Attempting autoplay...");
-        await video.play(); 
-        console.log("✅ Autoplay successful");
-      } catch (err) { 
-        console.error("❌ Autoplay failed:", err); 
-      }
+      try { await video.play(); } catch (err) { console.error("Autoplay failed:", err); }
     }
 
     setLoading(false);
   } catch (err) {
-    console.error("❌ loadSource error:", err);
+    console.error("loadSource error:", err);
     setLoading(false);
   }
 };
+
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   };
