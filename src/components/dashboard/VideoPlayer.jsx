@@ -273,6 +273,34 @@ const loadSource = async (player) => {
     await player.load(manifestUri);
     const video = videoRef.current;
     console.log("🎬 Video source loaded:", video);
+        // Log detailed track information
+    const tracks = player.getVariantTracks();
+    const currentTrack = player.getVariantTracks().find(t => t.active);
+    
+    console.log("🎛️ Track Information:", {
+      totalTracks: tracks.length,
+      currentTrack: currentTrack ? {
+        bandwidth: currentTrack.bandwidth,
+        codecs: currentTrack.codecs,
+        width: currentTrack.width,
+        height: currentTrack.height,
+        frameRate: currentTrack.frameRate
+      } : 'No active track',
+      allTracks: tracks.map(t => ({
+        id: t.id,
+        bandwidth: t.bandwidth,
+        codecs: t.codecs,
+        width: t.width,
+        height: t.height,
+        active: t.active
+      }))
+    });
+
+   
+    if (!video) {
+      console.error("❌ Video element not found");
+      return;
+    }
     if (!video) return;
 
     // Video events
@@ -300,11 +328,6 @@ const loadSource = async (player) => {
     setLoading(false);
   }
 };
-
-
-
-
-
 
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
