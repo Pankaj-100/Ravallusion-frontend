@@ -175,6 +175,7 @@ useEffect(() => {
 
       // initDataTransform to extract contentId
       player.configure("drm.initDataTransform", (initData, initDataType) => {
+        console.log("🔑 initDataTransform called:", { initDataType, initDataLength: initData.byteLength });
         if (initDataType === "skd") {
           const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
           contentId = skdUri.split("skd://")[1].substr(0, 32);
@@ -208,6 +209,7 @@ useEffect(() => {
 
             // Build request body
             const params = `spc=${spcBase64}&assetId=${contentId}`;
+             console.log("License Request Params:", params);
             request.body = shaka.util.StringUtils.toUTF8(params);
 
             console.log("✅ FairPlay license request prepared", {
