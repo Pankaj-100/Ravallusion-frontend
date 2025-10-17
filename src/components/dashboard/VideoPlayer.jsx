@@ -189,7 +189,8 @@ useEffect(() => {
         if (initDataType === "skd") {
           const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
           console.log("🔗 SKD URI:", skdUri);
-          const contentId = skdUri.split("skd://")[1]?.substring(0, 32) || source;
+           const contentId = skdUri.split("skd://")[1] || source;
+
           console.log("🆔 FairPlay Content ID:", contentId);
           if (typeof window !== 'undefined') window.contentId = contentId;
 
