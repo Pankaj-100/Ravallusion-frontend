@@ -217,7 +217,7 @@ useEffect(() => {
 player.getNetworkingEngine().registerResponseFilter((type, response) => {
   if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
 
-  try {
+ 
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     if (!isSafari) return;
 
@@ -227,46 +227,13 @@ player.getNetworkingEngine().registerResponseFilter((type, response) => {
     let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
     console.log("📄 Raw response text length:", responseText.length);
 
-    let licenseData = responseText;
 
-    // If it's JSON, try to parse it
- 
-      try {
-        const json = JSON.parse(responseText);
-        licenseData = json.ckc || json.license || json.data || responseText;
-        console.log("📋 Extracted license data from JSON");
-      } catch (err) {
-        console.warn("⚠️ JSON parse error, using raw response");
-        licenseData = responseText;
-      }
-    
 
-    // Check if licenseData is valid
-    if (!licenseData || licenseData.length === 0) {
-      console.error("❌ License data is empty or invalid");
-      return; // Don't transform if no license data
+      response.data = shaka.util.Uint8ArrayUtils.fromBase64(responseText).buffer;
     }
 
-    console.log("🔧 License data to decode, length:", licenseData.length);
 
-    // Decode the base64 license
-    try {
-      const licenseBuffer = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
-      response.data = licenseBuffer;
-      console.log("✅ FairPlay license response transformed successfully");
-      console.log("📦 Final license size:", licenseBuffer.byteLength, "bytes");
-    } catch (base64Error) {
-      console.error("❌ Base64 decode error:", base64Error);
-      // If base64 fails, try to use the original response data
-      console.log("🔄 Using original response data due to base64 error");
-      response.data = shaka.util.StringUtils.toUTF8(responseText);
-    }
-
-  } catch (err) {
-    console.error("❌ License Response Filter Error:", err);
-    // Don't throw - let Shaka handle the original response
-  }
-});
+);
 
       await loadSource(player);
 
