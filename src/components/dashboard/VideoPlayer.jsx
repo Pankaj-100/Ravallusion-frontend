@@ -204,10 +204,7 @@ useEffect(() => {
             const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
             const contentId = window.contentId || source;
             const params = `spc=${base64Payload}&assetId=${contentId}`;
-
-             
-    request.body = new TextEncoder().encode(params); 
-            // request.body = shaka.util.StringUtils.toUTF8(params);
+            request.body = shaka.util.StringUtils.toUTF8(params);
             request.headers["Content-Type"] = "text/plain";
           }
         } catch (err) {
