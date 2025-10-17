@@ -128,13 +128,13 @@ const MentorsSection = ({ mentor }) => {
                {mentor?.designation}
                 </div>
               </div>
-              <div className="text-sm md:text-base 2xl:text-lg"  dangerouslySetInnerHTML={createMarkup(mentor.about)}>
+              <div className="text-sm md:text-base 2xl:text-lg"  dangerouslySetInnerHTML={createMarkup(mentor?.about)}>
               </div>
             </div>
           </div>
 
           <div ref={ref} className="flex gap-5 2xl:gap-6">
-            {mentor.networks.map((link, i) => {
+            {mentor?.networks.map((link, i) => {
               const Icon = icons[i];
               return (
                 <div

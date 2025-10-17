@@ -13,7 +13,7 @@ const CustomAccordion = ({ list }) => {
       className="bg-[var(--card)] px-4 pb-1 rounded-xl"
       collapsible
     >
-      {list.filter((item) => item.status === 'Active').map((item, idx) => (
+      {list?.filter((item) => item.status === 'Active').map((item, idx) => (
         <AccordionItem
           key={item._id}
           value={item._id}

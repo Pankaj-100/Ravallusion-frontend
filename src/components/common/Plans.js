@@ -136,7 +136,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
                   : `$${plans?.[0]?.usd_price}`}
               </h1>
               <div className="text-[10px] 2xl:text-sm text-gray-400 font-semibold group-hover:text-white">
-                {getValidity(plans[0]?.validity)}
+                {getValidity(plans?.[0]?.validity)}
               </div>
             </div>
             <ArrowRight className="!w-6 !h-6 2xl:!w-7 2xl:!h-7 !p-0" />
@@ -145,7 +145,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
 
         <div className="!w-[70vw]  sm:!w-[296px] 2xl:!w-[22rem] !h-[450px] 2xl:!h-[31rem] bg-[#131A26] rounded-2xl  py-[30px] 2xl:py-4 flex flex-col plans-card">
           <h1 className="text-lg 2xl:text-xl uppercase pb-[30px] px-4 font-semibold border-b-[1px] 2xl:px-5 border-gray-500 bg-gradient-to-l from-[#C99BFD]/80 to-[var(--neon-purple)] bg-clip-text text-transparent 2xl:pb-9">
-            {plans[1]?.plan_type}
+            {plans?.[1]?.plan_type}
           </h1>
           <div className="py-[30px] px-4 flex flex-col 2xl:px-6 2xl:py-9 2xl:gap-6  gap-4 items-start">
             <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
@@ -180,7 +180,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
             onClick={() => {
               router.push(
                 `/mycart?planId=${plans[1]?._id}&planType=${
-                  plans[1]?.plan_type
+                  plans?.[1]?.plan_type
                 } ${
                   isIndia
                     ? `&price=${plans[1]?.inr_price}`
@@ -201,7 +201,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
                   : `$${plans?.[1]?.usd_price}`}
               </h1>
               <div className="text-[10px] 2xl:text-sm text-white group-hover:text-white font-semibold ">
-                {getValidity(plans[1].validity)}
+                {getValidity(plans?.[1].validity)}
               </div>
             </div>
             <ArrowRight className="!w-6 !h-6 2xl:!w-7 2xl:!h-7 !p-0" />

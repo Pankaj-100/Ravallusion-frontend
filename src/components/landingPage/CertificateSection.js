@@ -12,7 +12,7 @@ const CertificateSection = ({ certificate }) => {
 
         <div className="p-5 py-[20px] rounded-2xl certificate backdrop-blur-xl">
           <Image
-            src={certificate.image} 
+            src={certificate?.image} 
             width={1000}
             height={1000}
             alt="certificate"
@@ -23,9 +23,9 @@ const CertificateSection = ({ certificate }) => {
 
         <div className="flex flex-col gap-4">
           <div className="text-[34px] md:text-5xl xl:text-6xl font-bold">
-            {certificate.caption}
+            {certificate?.caption}
           </div>
-          {certificate.key_points.map((point) => (
+          {certificate?.key_points.map((point) => (
             <div
               key={point}
               className="flex items-center gap-3 text-xs xl:text-base"

@@ -35,7 +35,7 @@ const MainCarousel = ({ data }) => {
 
   useEffect(() => {
     // Duplicate data if there are only 1 or 2 items to enable proper looping
-    if (data.length <= 2) {
+    if (data?.length <= 2) {
       const duplicatedData = [...data, ...data, ...data];
       setCarouselData(duplicatedData);
     } else {
@@ -56,7 +56,7 @@ const MainCarousel = ({ data }) => {
     <LandingContainer className="!px-0 flex items-center justify-center !h-fit py-12 sm:py-56 mt-1">
       {screenWidth < 1025 ? (
         <CustomCarousel>
-          {carouselData.map((item, index) => (
+          {carouselData?.map((item, index) => (
             <CarouselItem 
               key={index} 
               className={data.length <= 2 ? "basis-full" : "basis-[70%]"}
