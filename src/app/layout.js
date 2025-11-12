@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Alexandria } from 'next/font/google'
 import LayoutWrapper from "@/components/LayoutWrapper";
+import NetworkStatus from "@/components/common/NetworkStatus";
 
 
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} ${alexandria.variable}  antialiased`}
       >
         <LayoutWrapper>
+          <NetworkStatus /> 
           {children}
         </LayoutWrapper>
       </body>

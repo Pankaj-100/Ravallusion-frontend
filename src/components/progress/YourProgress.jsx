@@ -115,9 +115,16 @@ function YourProgress() {
 
                   {isCourseCompleted && (
                     <div>
-                      <div className="text-sm mt-1 break-all text-[#FFEA47]">
-                        🥳 🎉 Congratulations you completed a course
-                      </div>
+                 <div className="text-sm mt-1 text-[#FFEA47] break-words leading-snug">
+  {/* Mobile view: only show “Congratulations” */}
+  <span className="block sm:hidden">🥳 🎉 Congratulations</span>
+
+  {/* Desktop view: show full text */}
+  <span className="hidden sm:block">
+    🥳 🎉 Congratulations you completed a course
+  </span>
+</div>
+
                       <button
                         className="p-0 m-0 text-[#2C68F6] mt-2 font-medium"
                         onClick={handleDownloadCertificate}

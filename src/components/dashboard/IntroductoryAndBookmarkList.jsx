@@ -278,7 +278,7 @@ export const LessonCard = ({
             background: "rgba(0, 0, 0, 0.50)",
             backdropFilter: "blur(5.4px)",
           }}
-          className="px-1 py-[2px] text-[10px] absolute top-2 right-2 rounded-sm"
+          className="px-1 py-[2px] text-[10px] absolute bottom-2 right-2 rounded-sm"
         >
           {duration || "00:00:00"}
         </span>

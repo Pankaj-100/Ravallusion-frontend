@@ -11,6 +11,12 @@ export default function LandingLayout({ children }) {
   const isIndia = useSelector((state) => state.general.isIndia);
 
   const dispatch = useDispatch();
+  useEffect(() => {
+  // Scroll to top on page load
+  if (typeof window !== 'undefined') {
+    window.scrollTo(0, 0);
+  }
+}, []);
 
   useEffect(() => {
     const fetchCountry = async () => {

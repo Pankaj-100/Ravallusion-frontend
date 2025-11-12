@@ -5,6 +5,7 @@ import {
   BookMark,
   Quiz,
   Bookmarked,
+  QuizIcon,
   Resources,
 } from "@/lib/svg_icons";
 import React, { useEffect, useState, useCallback, useRef } from "react";
@@ -16,14 +17,8 @@ import {
 } from "@/store/Api/introAndBookmark";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-
-// export const chapters = [
-//   { title: "Chapter 1", time: 0 },
-//   { title: "Chapter 2", time: 60 },
-//   { title: "Chapter 3", time: 120 },
-//   { title: "Chapter 3", time: 180 },
-//   { title: "Chapter 3", time: 240 },
-// ];
+import Instruction from "../quiz/Instruction";
+import { useCheckEligibilityQuery } from "@/store/Api/quizApi";
 
 const VideoDescription = ({
   videoId,
@@ -34,11 +29,8 @@ const VideoDescription = ({
   showTimeStamp,
   chapterRef,
   isCompleted,
-  
   chapters,
 }) => {
-
-
   const chapterSection = useRef(null);
   const [addToBookmark] = useAddBookmarkMutation();
   const { data: getdata, refetch } = useGetBookmarkQuery();
@@ -49,6 +41,17 @@ const VideoDescription = ({
   const [bookmarkedId, setBookmarkId] = useState(null);
   const { submoduleId } = useSelector((state) => state.general);
   const [isClient, setIsClient] = useState(null);
+
+  // Quiz eligibility check - remove skip condition to always start the query
+  const {
+    data: eligibilityData,
+    isLoading: eligibilityLoading,
+    error: eligibilityError,
+    refetch: refetchEligibility
+  } = useCheckEligibilityQuery(videoId, {
+    // Remove the skip condition to always start the query
+    // This prevents the "Cannot refetch a query that has not been started yet" error
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -80,31 +83,15 @@ const VideoDescription = ({
           toast.error("bookmarkId is undefined");
           return;
         }
-
-        // const response = await deleteFromBookmark({ bookmarkedId }).unwrap();
-        // setIsBookmarked(false);
-        // setBookmarkId(null);
-        // return;
       }
 
       const response = await addToBookmark({ videoId }).unwrap();
       toast.success(response?.message || "Video bookmarked successfully");
       setIsBookmarked(true);
-
-      // Refetch to get the bookmark ID
-      // const updatedData = await refetch();
-      // const newBookmark = updatedData?.data?.bookmarks?.find(
-      //   (b) => b.video._id === videoId
-      // );
-
-      // if (newBookmark?._id) {
-      //   setBookmarkId(newBookmark._id);
-      // }
     } catch (error) {
       console.error(error);
       toast.error(error?.data?.message || "Error while bookmarking video");
     }
-    // }, [isBookmarked, bookmarkedId, videoId, addToBookmark, deleteFromBookmark, refetch]);
   }, [isBookmarked, bookmarkedId, videoId, addToBookmark]);
 
   const handleToggle = () => setIsExpanded(!isExpanded);
@@ -114,37 +101,36 @@ const VideoDescription = ({
       ? description?.slice(0, 100) + "..."
       : description;
 
-  const handleResource = () => {
-    if (!downloadResource) {
-      toast.warning("Resource not found");
-      return;
+  const handleQuiz = () => {
+    setIsQuizOpen(true);
+    // Refetch eligibility when opening quiz dialog
+    if (videoId) {
+      // Add a small delay to ensure the query is properly initialized
+      setTimeout(() => {
+        refetchEligibility();
+      }, 100);
     }
-    const a = document.createElement("a");
-    a.href = downloadResource;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   };
+
   const handleDownloadAssignment = () => {
     if (downloadAssignment) {
       const a = document.createElement("a");
       a.href = downloadAssignment;
-      a.download = ""; // Optional: force download
+      a.download = "";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     }
 
     if (downloadResource) {
-      // Delay the second download slightly
       setTimeout(() => {
         const a = document.createElement("a");
         a.href = downloadResource;
-        a.download = ""; // Optional
+        a.download = "";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-      }, 500); // 500ms delay to allow the first download to trigger
+      }, 500);
     }
   };
 
@@ -178,29 +164,30 @@ const VideoDescription = ({
           </div>
         )}
       </div>
- <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center ">
-   <TextIconBox
-  title="Submit assignment"
-  icon={<Assignment />}
-  onClick={() => {
-    if (isCompleted) {
-      setIsAssignmentOpen(true);
-    }
-  
-  }}
-  disabled={!isCompleted}
-/>
+
+      <div className="flex gap-y-2 md:gap-y-2 md:gap-x-4 flex-col md:flex-row items-center ">
+        <TextIconBox
+          title="Submit assignment"
+          icon={<Assignment />}
+          onClick={() => {
+            if (isCompleted) {
+              setIsAssignmentOpen(true);
+            }
+          }}
+          disabled={!isCompleted}
+        />
         <TextIconBox
           title="Download assets"
           icon={<DownloadIcon />}
           onClick={handleDownloadAssignment}
         />
-        {/* <TextIconBox
-          title="Download resources"
-          icon={<Resources />}
-          onClick={handleResource}
-        /> */}
+        <TextIconBox
+          title="Attend Quiz"
+          icon={<QuizIcon />}
+          onClick={handleQuiz}
+        />
       </div>
+
       <div className="mt-2">
         <p className="text-sm">
           {isExpanded ? description : truncatedText}
@@ -236,8 +223,6 @@ const VideoDescription = ({
         </div>
       )}
 
-     
-
       <CustomDialog
         open={isAssignmentOpen}
         close={() => setIsAssignmentOpen(false)}
@@ -245,6 +230,16 @@ const VideoDescription = ({
         <SubmitAssignment
           videoId={videoId}
           setIsAssignmentOpen={setIsAssignmentOpen}
+        />
+      </CustomDialog>
+
+      <CustomDialog open={isQuizOpen} close={() => setIsQuizOpen(false)}>
+        <Instruction 
+          close={() => setIsQuizOpen(false)}
+          eligibilityData={eligibilityData}
+          eligibilityLoading={eligibilityLoading}
+          eligibilityError={eligibilityError}
+          videoId={videoId}
         />
       </CustomDialog>
     </div>

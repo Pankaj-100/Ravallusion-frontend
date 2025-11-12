@@ -11,6 +11,90 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+.glow-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 4px solid var(--neon-purple);
+  background: var(--button-bg);
+  color: #fff;
+  z-index: 0;
+}
+
+/* Make sure button text sits above */
+.glow-btn-content {
+  position: relative;
+  z-index: 20;
+}
+
+/* Common border line styling */
+.snake-border {
+  position: absolute;
+  display: block;
+  background: linear-gradient(90deg, transparent, var(--neon-purple));
+  filter: drop-shadow(0 0 6px var(--neon-purple));
+  z-index: 10;
+}
+
+/* Top */
+.snake-top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, transparent, var(--neon-purple));
+  animation: snakeTop 2s linear infinite;
+}
+@keyframes snakeTop {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Right */
+.snake-right {
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--neon-purple));
+  animation: snakeRight 2s linear infinite;
+  animation-delay: 0.5s;
+}
+@keyframes snakeRight {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Bottom */
+.snake-bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to left, transparent, var(--neon-purple));
+  animation: snakeBottom 2s linear infinite;
+  animation-delay: 1s;
+}
+@keyframes snakeBottom {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Left */
+.snake-left {
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to top, transparent, var(--neon-purple));
+  animation: snakeLeft 2s linear infinite;
+  animation-delay: 1.5s;
+}
+@keyframes snakeLeft {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
 
 /* @font-face {
   font-family: 'Satoshi';

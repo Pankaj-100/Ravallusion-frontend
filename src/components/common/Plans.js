@@ -104,10 +104,10 @@ const Plans = ({ plans, showSkeleton = false }) => {
               {/* <span>{plans[0].quality}</span> */}
               <span className="lg:text-xl font-semibold">Standard FHD quality</span>
             </div>
-            <div className="flex gap-7  items-center 2xl:gap-9 2xl:text-sm pr-2">
+               <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <DevicesIcon />
-              {/* <span>{plans[0].devices}</span> */}
-              <span className="lg:text-xl font-semibold"> Watch on Laptop, Mobile, Tab and ipad</span>
+              {/* <span>{plans[1].devices}</span> */}
+              <span className="lg:text-xl font-semibold">Watch on Laptop, Mobile, Tab and ipad</span>
             </div>
           </div>
 
@@ -170,7 +170,7 @@ const Plans = ({ plans, showSkeleton = false }) => {
               {/* <span>{plans[1].quality}</span> */}
               <span className="lg:text-xl font-semibold">Standard FHD quality</span>
             </div>
-            <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm pr-2">
+            <div className="flex gap-7 text-xs items-center 2xl:gap-9 2xl:text-sm ">
               <DevicesIcon />
               {/* <span>{plans[1].devices}</span> */}
               <span className="lg:text-xl font-semibold">Watch on Laptop, Mobile, Tab and ipad</span>

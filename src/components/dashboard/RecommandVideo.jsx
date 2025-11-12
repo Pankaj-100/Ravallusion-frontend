@@ -75,7 +75,7 @@ const RecommandVideo = () => {
           return (
             <div
               key={item._id}
-              className="flex items-center gap-x-3 cursor-pointer"
+              className="flex items-start gap-x-3 cursor-pointer group"
               onClick={() => handleVideoClick(video)}
               role="button"
               tabIndex={0}
@@ -83,12 +83,13 @@ const RecommandVideo = () => {
                 if (e.key === "Enter" || e.key === " ") handleVideoClick(video);
               }}
             >
-              <div className="relative w-32 h-16  rounded-lg overflow-hidden">
+              {/* Fixed thumbnail size - won't shrink */}
+              <div className="flex-shrink-0 relative w-32 h-16 rounded-lg overflow-hidden">
                 <Image
                   src={video.thumbnailUrl}
                   alt={video.title}
                   fill
-                  className="object-cover rounded-lg"
+                  className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
                 />
                 <span
                   className="absolute top-2 right-2 text-[10px] px-1 py-[2px] rounded-sm text-white"
@@ -101,30 +102,28 @@ const RecommandVideo = () => {
                 </div>
               </div>
 
-              <div className="flex-grow">
-                <h2 className="text-sm font-medium leading-tight">{video.title}</h2>
+              {/* Text content that can grow but won't affect thumbnail */}
+              <div className="flex-1 min-w-0 py-1">
+                <h2 className="text-sm font-medium leading-tight line-clamp-2 break-words">
+                  {video.title}
+                </h2>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Upgrade modal — exact Figma design */}
       <CustomDialog open={upgradeOpen} close={() => setUpgradeOpen(false)}>
-        <div className="flex items-center justify-center p-4">
+        <div className="flex items-center justify-center p-3 sm:p-4">
           <div
-            className="relative bg-[#192029] rounded-[16px] border border-transparent"
+            className="relative bg-[#192029] rounded-[16px] border border-transparent w-full max-w-[425px] sm:w-[425px]"
             style={{
-              width: "425px",
-              maxWidth: "90vw",
-              background: 
-                "linear-gradient(0deg, #192029, #192029), " +
-                "linear-gradient(291.43deg, rgba(0,0,0,0) 45.59%, rgba(133,116,246,0.35) 96.1%)",
+              background:
+                "linear-gradient(0deg, #192029, #192029), linear-gradient(291.43deg, rgba(0,0,0,0) 45.59%, rgba(133,116,246,0.35) 96.1%)",
               backgroundOrigin: "border-box",
               backgroundClip: "padding-box, border-box",
               boxShadow:
-                "inset 2px 4px 11.9px 0px rgba(255,255,255,0.10), " +
-                "inset -4px -2px 10.1px 0px rgba(255,255,255,0.10)",
+                "inset 2px 4px 11.9px 0px rgba(255,255,255,0.10), inset -4px -2px 10.1px 0px rgba(255,255,255,0.10)",
               backdropFilter: "blur(25.2px)",
             }}
           >
@@ -132,49 +131,56 @@ const RecommandVideo = () => {
             <div
               className="absolute inset-0 rounded-[16px] p-px -z-10"
               style={{
-                background: "linear-gradient(92.36deg, rgba(255,255,255,0.25) 2.51%, rgba(255,255,255,0) 48.45%)",
+                background:
+                  "linear-gradient(92.36deg, rgba(255,255,255,0.25) 2.51%, rgba(255,255,255,0) 48.45%)",
                 mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
                 maskComposite: "exclude",
                 WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
                 WebkitMaskComposite: "xor",
               }}
             />
-            
+
             {/* Content container */}
-            <div className="p-[30px] relative z-10">
+            <div className="p-5 sm:p-[30px] relative z-10">
               {/* Close button */}
               <button
                 aria-label="Close"
                 onClick={() => setUpgradeOpen(false)}
-                className="absolute top-[18px] right-[18px] w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                className="absolute top-3 right-3 sm:top-[18px] sm:right-[18px] w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white/90">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-white/90"
+                >
                   <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.7" />
                 </svg>
               </button>
 
               {/* Content */}
-              <div className="flex flex-col gap-[30px]">
+              <div className="flex flex-col gap-5 sm:gap-[30px]">
                 {/* Heading section */}
-                     <div className="flex-shrink-0 mt-1">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-1">
+                  <div className="flex-shrink-0 mx-auto sm:mx-0">
                     <Premium />
                   </div>
-                <div className="flex items-start gap-4">
-             
-                  <div>
-                    <h3 className="text-[24px] leading-[32px] font-semibold text-white tracking-[-0.01em]">
+
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-[20px] sm:text-[24px] leading-[28px] sm:leading-[32px] font-semibold text-white tracking-[-0.01em]">
                       Upgrade your subscription plan
                     </h3>
-                    <p className="text-[14px] leading-[20px] text-white/70 mt-1.5">
-                      This is applicable only for beginner plan users
+                    <p className="text-[13px] sm:text-[14px] leading-[20px] text-white/70 mt-1.5">
+                      This is applicable only for Advance plan users
                     </p>
                   </div>
                 </div>
 
-                {/* CTA Button - Fixed navigation */}
+                {/* CTA Button */}
                 <button
                   onClick={handleUpgrade}
-                  className="w-full h-14 rounded-xl font-semibold text-white text-[16px] relative overflow-hidden"
+                  className="w-full h-12 sm:h-14 rounded-xl font-semibold text-white text-[15px] sm:text-[16px] relative overflow-hidden"
                   style={{
                     background: "linear-gradient(90deg, #6E6CF6 0%, #9A8CF6 100%)",
                     boxShadow: "inset 0px 1px 0px rgba(255, 255, 255, 0.25)",

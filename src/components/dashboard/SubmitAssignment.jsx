@@ -36,6 +36,13 @@ const SubmitAssignment = ({ setIsAssignmentOpen, videoId }) => {
     }
     if (!file) return;
 
+    // Add image validation here
+    if (file.type.startsWith('image/')) {
+      toast.error("Image files are not allowed!");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setIsUploading(true);
     setProgress(0);
 

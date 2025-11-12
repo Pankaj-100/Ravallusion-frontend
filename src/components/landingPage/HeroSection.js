@@ -1,6 +1,6 @@
 import Image from "next/image";
 import LandingContainer from "../common/LandingContainer";
-import { GlowButton } from "../common/CustomButton";
+import { GlowButton ,RotatingGlowButton} from "../common/CustomButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createMarkup } from "@/lib/functions";
@@ -28,8 +28,8 @@ console.log(data?.caption)
          {data?.description}
         </p>
 
-        <GlowButton className="text-lg 2xl:text-2xl mt-4 px-14 2xl:px-16 py-7 2xl:py-8 w-40">
-          <Link href={"/login"}>Enroll Now</Link>
+        <GlowButton className="text-2xl 2xl:text-2xl mt-4 px-14 2xl:px-16 py-7 2xl:py-8 w-60">
+          <Link href={"/login"}> Enroll Now </Link>
         </GlowButton>
       </div>
 
@@ -40,7 +40,7 @@ console.log(data?.caption)
             src="/Hero section image - Mobile res.png"
             fill
             alt="Hero Background"
-            style={{ objectFit: "cover", filter: "brightness(0.7)" }}
+            style={{ objectFit: "fit", filter: "brightness(0.7)" }}
           />
         ) : (
           <Image

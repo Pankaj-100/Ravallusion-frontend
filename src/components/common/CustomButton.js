@@ -18,13 +18,29 @@ export const CustomButton = ({ children, disabled, ...props }) => {
 export const GlowButton = ({ children, ...props }) => {
   const { className, onClick } = props;
 
-  const classes = cn("glow-btn text-base py-6 btn", className);
+  const classes = cn(
+    "glow-btn relative  inline-flex items-center justify-center text-base py-6 px-10 btn",
+    className
+  );
+
   return (
     <CustomButton {...props} className={classes} onClick={onClick}>
-      {children}
+      {/* Snake borders */}
+      <span className="snake-border snake-top"></span>
+      <span className="snake-border snake-right"></span>
+      <span className="snake-border snake-bottom"></span>
+      <span className="snake-border snake-left"></span>
+
+      {/* Button content */}
+      <span className="glow-btn-content relative z-20 flex items-center justify-center">
+        {children}
+      </span>
     </CustomButton>
   );
 };
+
+
+
 
 export const SubmitButton = ({ children, disabled, ...props }) => {
   const { className, onClick } = props;
@@ -42,3 +58,6 @@ export const SubmitButton = ({ children, disabled, ...props }) => {
     </CustomButton>
   );
 };
+
+
+

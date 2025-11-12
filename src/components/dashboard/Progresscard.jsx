@@ -56,7 +56,7 @@ function Progresscard() {
     
      
 
-        <div className="bg-[#040C19] border-none mt-[0.7rem] rounded-xl mx-3">
+        <div className="bg-[#040C19] border-none mt-[0.7rem] rounded-xl mx-3 mb-3">
           {isDataLoading && (
             <div className="flex w-[25rem] h-[10rem] justify-center items-center">
               <SimpleLoader />
@@ -66,10 +66,10 @@ function Progresscard() {
           {showCelebration && <Celebration />}
 
           {!isDataLoading && (
-            <div className="text-[#fff] px-5 py-1 pb-3 ">
+            <div className="text-[#fff] px-5 py-1  ">
            
 
-              <div className="mt-4 flex gap-2 items-center">
+              <div className="mt-2 flex gap-2 items-center">
          
 
                 <div className="flex flex-col">

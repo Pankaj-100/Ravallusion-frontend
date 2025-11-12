@@ -123,19 +123,19 @@ const PlayerSidebar = () => {
           onClick={() => {
             setActiveIndex(1);
             dispatch(setSidebarTabIndex(1));
-          }}
+          }}  
         />
         <ActionCard
           icon={<Bookmark />}
           isActive={activeIndex === 2}
           onClick={() => {
-            setActiveIndex(2);
+            setActiveIndex(2);  
             dispatch(setSidebarTabIndex(2));
           }}
         />
       </div>
 
-<div className="py-2 bg-[#181F2B] rounded-2xl h-[88%] mb-2 overflow-y-auto custom-scrollbar-hover">   
+<div className="py-2 bg-[#181F2B] rounded-2xl h-[88%] mb-2  overflow-y-auto custom-scrollbar-hover ">   
   <div className=" bg-[#181F2B] rounded-2xl h-[70vh]  ">   
        {activeIndex === 0 && (
           <>
@@ -156,7 +156,8 @@ const PlayerSidebar = () => {
               />
             )}
            {courseType==="beginner"&& planType==="Beginner"?<RecommandVideo /> : ""}
-            <Progresscard />
+         <Progresscard />
+           
           </>
         )}
 

@@ -435,7 +435,7 @@ const BoxDropdown = ({ title1, title2, href, setIsOpenBoxDropdown }) => {
         </span>
         <span
                 onClick={() => handleClick(title2)}
-          className="block px-4 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
+          className="block px-3 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
         >
           {title2}
         </span>

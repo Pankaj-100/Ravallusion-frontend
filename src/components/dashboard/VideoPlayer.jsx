@@ -49,7 +49,7 @@ const VideoPlayer = ({
   ref,
   registerVideoRef,
   autoPlay,
-  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-20 w-20" />,
+  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-14   w-14" />,
   latestVideo = false,
   onPlayChange = () => {},
   showTimeStamp,
