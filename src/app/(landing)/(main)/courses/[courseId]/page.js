@@ -111,7 +111,7 @@ const CourseDetailPage = () => {
                 </GlowButton>
                 <CustomButton 
                   className="!p-5 !py-5 !text-base 2xl:!text-lg !rounded-xl primary-btn flex items-center gap-2" 
-                  onClick={handleDownload}
+                //   onClick={handleDownload}
                 >
                   Download Curriculum <DownloadIcon />
                 </CustomButton>
