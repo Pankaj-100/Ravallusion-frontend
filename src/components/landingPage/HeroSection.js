@@ -1,6 +1,6 @@
 import Image from "next/image";
 import LandingContainer from "../common/LandingContainer";
-import { GlowButton ,RotatingGlowButton} from "../common/CustomButton";
+import { GlowButton } from "../common/CustomButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createMarkup } from "@/lib/functions";

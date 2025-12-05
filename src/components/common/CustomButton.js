@@ -25,11 +25,7 @@ export const GlowButton = ({ children, ...props }) => {
 
   return (
     <CustomButton {...props} className={classes} onClick={onClick}>
-      {/* Snake borders */}
-      <span className="snake-border snake-top"></span>
-      <span className="snake-border snake-right"></span>
-      <span className="snake-border snake-bottom"></span>
-      <span className="snake-border snake-left"></span>
+  
 
       {/* Button content */}
       <span className="glow-btn-content relative z-20 flex items-center justify-center">

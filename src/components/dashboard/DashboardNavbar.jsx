@@ -143,8 +143,8 @@ const DashboardNavbar = () => {
         </div>
       )}
 
-      <div className="flex gap-x-1 items-center my-auto">
-        {urlpath != "search" && (
+      <div className="flex gap-x-5 items-center my-auto">
+        {/* {urlpath != "search" && (
           <div
             className="p-3 border border-gray-600 relative cursor-pointer"
             onClick={() => {
@@ -154,22 +154,22 @@ const DashboardNavbar = () => {
             <EllipseOfSearch />
             <SearchIcon size={24} />
           </div>
-        )}
+        )} */}
 
         <div className="hidden lg:flex gap-x-2">
-          <BoxComponent
+          {/* <BoxComponent
             show={show}
             icon={<CrownIcon />}
             title={" VFX "}
             title1={"Photoshop"}
             title2={"Premier pro"}
             href={"/dashboard/player-dashboard/advanced"}
-          />
+          /> */}
 
           <BoxComponent
             show={show}
             icon={<Gear />}
-            title={"Editorial"}
+            title={"My Courses"}
             title1={"Photoshop"}
             title2={"Premier pro"}
             href={"/dashboard/player-dashboard/beginner"}
@@ -184,7 +184,7 @@ const DashboardNavbar = () => {
           />
         </div>
 
-        <YourProgress />
+        {/* <YourProgress /> */}
 
         <ProfileComponent
           show={show}

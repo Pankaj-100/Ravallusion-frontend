@@ -12,6 +12,7 @@ import { videoProgressApi } from "./Api/videoProgress";
 import { courseProgressApi } from "./Api/courseProgress";
 import { quizApi } from "./Api/quizApi"; // Import the quiz API
 import course from "./slice/course";
+import { coursesListApi } from "./Api/courseslist";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     [videoProgressApi.reducerPath]: videoProgressApi.reducer,
     [courseProgressApi.reducerPath]: courseProgressApi.reducer,
     [quizApi.reducerPath]: quizApi.reducer, 
+    [coursesListApi.reducerPath]: coursesListApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -40,7 +42,8 @@ export const store = configureStore({
       .concat(primaryDashboardApi.middleware)
       .concat(videoProgressApi.middleware)
       .concat(courseProgressApi.middleware)
-      .concat(quizApi.middleware), 
+      .concat(quizApi.middleware)
+      .concat(coursesListApi.middleware),
 });
 
 setupListeners(store.dispatch);

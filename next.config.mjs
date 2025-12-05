@@ -42,6 +42,9 @@ const nextConfig = {
         destination: "https://api.ravallusion.com/api/:path*",
 
         // destination: "http://localhost:4000/api/:path*",
+
+          //  destination: "https://revallusion-backend-jywg.onrender.com/api/:path*",
+     
       },
     ];
   },

@@ -11,7 +11,7 @@ const StaticHeader = ({ list, heading, subHeading, className }) => {
     >
       <CustomBreadcrum list={list} />
       <div className="flex flex-col gap-4 items-center">
-        <div className="text-[34px] md:text-5xl  font-bold sm:w-[20rem] md:w-[32rem] text-center flex justify-center">
+        <div className="text-[32px] md:text-5xl  font-bold sm:w-[20rem] md:w-[32rem] text-center flex justify-center">
           {heading}
         </div>
         {subHeading && (

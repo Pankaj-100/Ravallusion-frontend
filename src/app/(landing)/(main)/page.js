@@ -18,6 +18,8 @@ import {
 
 import { publicIpv4 } from 'public-ip'
 import ipLocation from "iplocation";
+import CourseSection from "@/components/landingPage/CourseSection";
+import Banner from "@/components/landingPage/Banner";
 
 
 export default function Home() {
@@ -42,12 +44,14 @@ export default function Home() {
       <HeroSection data={heroSection?.data?.heroSection} />
       <MainCarousel data={carouselSection?.data?.carousals} />
       <TutorialsSection data={latestTutorialSection?.data?.tutorials} />
-      <PlansSection plans={planSection?.data?.plans} />
-      <ModuleSection modules={moduleSection?.data?.modules} curriculum={curriculumSection?.data?.curriculum} />
+      <CourseSection  />
+      {/* <PlansSection plans={planSection?.data?.plans} /> */}
+      {/* <ModuleSection modules={moduleSection?.data?.modules} curriculum={curriculumSection?.data?.curriculum} /> */}
       
       <MentorsSection mentor={mentorSection?.data?.mentor} />
       <CertificateSection certificate={certificateSection?.data?.certificate} />
       <FAQSection faqs={faqSection?.data?.faqs} />
+      <Banner />  
     </div>
   );
 }
