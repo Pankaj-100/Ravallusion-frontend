@@ -3,18 +3,38 @@
 import Card from "./Card";
 import { CheckIcon, ClockIcon, VideoIcon } from "@/lib/svg_icons";
 import { motion, useAnimation, useTransform } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const ModuleCard = ({ index, item, progress, range, targetScale, isFirst, inView }) => {
   const scale = useTransform(progress, range, [1, targetScale]);
   const controls = useAnimation();
   const [hasAnimated, setHasAnimated] = useState(false);
+  const isMountedRef = useRef(false);
+  
+  // Initialize animation on mount
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    // Reset animation state when component mounts or item changes
+    setHasAnimated(false);
+    
+    // Set initial visible state immediately
+    controls.set({
+      y: 0,
+      opacity: 1
+    });
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [item._id, controls]);
 
   useEffect(() => {
-    if (isFirst && inView && !hasAnimated) {
-      // Set initial position
+    // Only run animation if component is mounted, is first card, in view, and hasn't animated yet
+    if (isMountedRef.current && isFirst && inView && !hasAnimated) {
+      // Start from slightly below for animation effect
       controls.set({
-        y: 100,  // Start from below
+        y: 30,
         opacity: 0
       });
 
@@ -23,25 +43,41 @@ const ModuleCard = ({ index, item, progress, range, targetScale, isFirst, inView
         y: 0,
         opacity: 1,
         transition: {
-          duration: 0.6,
-          ease: "easeOut"
+          duration: 0.8,
+          ease: "easeOut",
+          delay: 0.1 // Small delay to ensure smooth animation
         }
       }).then(() => {
-        setHasAnimated(true);
+        if (isMountedRef.current) {
+          setHasAnimated(true);
+        }
       });
     }
   }, [isFirst, inView, controls, hasAnimated]);
 
   return (
-    <div className={`cardContainer px-5 md:px-[4%] lg:px-[8%] ${isFirst ? "mt-[95%] md:mt-[42%] lg:mt-[30%] xl:mt-[20%] top-[6rem] 2xl:top-[12rem]" : "top-[6rem]"} 2xl:top-[12rem]`}>
+    <div 
+      className={`cardContainer px-5 md:px-[4%] lg:px-[8%] ${
+        isFirst ? "mt-[95%] md:mt-[42%] lg:mt-[30%] xl:mt-[20%] top-[6rem] 2xl:top-[12rem]" : "top-[6rem]"
+      } 2xl:top-[12rem]`}
+      key={`module-container-${item._id || index}`}
+    >
       <motion.div
         className="card"
         style={{ 
           scale: scale, 
-          top: `calc(${typeof window !== 'undefined' && window.innerWidth > 625 ? index * 25 : index * 10}px)` 
+          top: `calc(${
+            typeof window !== 'undefined' && window.innerWidth > 625 
+              ? index * 25 
+              : index * 10
+          }px)` 
         }}
-        initial={isFirst ? { y: 200, opacity: 0 } : undefined}
-        animate={isFirst ? controls : undefined}
+        // Always start with opacity 1 to prevent invisible state on reload
+        initial={{ opacity: 1, y: 0 }}
+        // Use controls for animation, but fallback to visible state
+        animate={isFirst && hasAnimated === false ? controls : { opacity: 1, y: 0 }}
+        // Add a key to force re-render on reload
+        key={`module-card-${item._id || index}-${Date.now()}`}
       >
         <Card className="!h-fit gap-7 flex md:!flex-row justify-between py-7 px-4 md:p-[60px] 2xl:p-[70px] items-start flex-wrap md:flex-nowrap">
           <div className="text-2xl md:text-[35px] 2xl:text-[2.5rem] min-w-[53%] md:font-bold">
@@ -99,7 +135,7 @@ const ModulesList = ({ scrollYProgress, modules, inView }) => {
     const targetScale = 1 - (modulesList.length - index) * 0.02;
     return (
       <ModuleCard
-        key={item._id || index}
+        key={`module-${item._id || index}-${Date.now()}`} // Add timestamp to force re-render on reload
         item={item}
         index={index}
         progress={scrollYProgress}
