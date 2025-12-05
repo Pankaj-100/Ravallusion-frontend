@@ -9,7 +9,10 @@ export const coursesListApi = createApi({
             query: ({ page = 1, limit = 10 } = {}) => 
                 `newcourses?page=${page}&limit=${limit}`
         }),
+        getCourseModules: builder.query({
+            query: (courseId) => `module?courseId=${courseId}`
+        }),
     }),
 });
 
-export const { useGetAllCoursesQuery } = coursesListApi;
+export const { useGetAllCoursesQuery, useGetCourseModulesQuery } = coursesListApi;

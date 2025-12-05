@@ -5,15 +5,23 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { GlowButton } from "../common/CustomButton";
 import { ArrowRightIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const CourseCard = ({ course }) => {
+  const router = useRouter();
+
   if (!course) return null;
+
+  const handleCardClick = () => {
+    router.push(`/courses/${course._id}`);
+  };
 
   return (
     <motion.div
-      className="relative w-[350px] h-[568px] rounded-3xl overflow-hidden shadow-lg bg-[#0B0B0B]/80 border border-white/10"
+      className="relative w-[350px] h-[568px] rounded-3xl overflow-hidden shadow-lg bg-[#0B0B0B]/80 border border-white/10 cursor-pointer"
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3 }}
+      onClick={handleCardClick}
     >
       {/* Background Image with blur */}
       <div className="absolute inset-0">
@@ -66,7 +74,10 @@ const CourseCard = ({ course }) => {
         </div>
 
         {/* Enroll Button */}
-        <GlowButton className="mt-6 w-full py-6 text-xl rounded-xl font-bold">
+        <GlowButton 
+          className="mt-6 w-full py-6 text-xl rounded-xl font-bold"
+          onClick={(e) => e.stopPropagation()}
+        >
           Enroll now <ArrowRightIcon className="ml-2 !h-6 !w-8" />
         </GlowButton>
       </div>

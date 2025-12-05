@@ -62,7 +62,7 @@ const Instruction = ({
     return (
       <div className="bg-[#181F2B] text-white rounded-2xl min-w-[705px] mx-auto py-4 px-6">
         <div className="text-center py-8">
-          <p className="text-red-400">Error loading quiz information</p>
+          <p className="text-red-400">QUIZ NOT FOUND</p>
           <button 
             onClick={close}
             className="mt-4 px-4 py-2 bg-red-600 rounded-lg"
