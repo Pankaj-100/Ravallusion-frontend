@@ -5,7 +5,7 @@ const initialState = {
   planType: null,
   beginnerFirstVideo: false,
   planPrice: null,
-  usdPrice:null,
+  usdPrice: null,
   isIndia: true,
   introductoryVideosCount: 0,
   bookmarkCount: 0,
@@ -17,101 +17,124 @@ const initialState = {
   searchValue: " ",
   searchHistory: [],
   videoTitle: "",
-  paymentSuccess:false,
-   sidebarTabIndex: 0,
-   courseType: null, // 'photoshop' or 'premier-pro'
+  paymentSuccess: false,
+  sidebarTabIndex: 0,
+  courseType: null,
   shouldPlayFirstVideo: false,
   isLocked: null,
   videoLevel: null,
+  courseData: null, // Add this to store full course object
 }
 
 export const generalSlice = createSlice({
   name: 'general',
   initialState,
   reducers: {
-      setSidebarTabIndex: (state, action) => {
-    state.sidebarTabIndex = action.payload;
-  },
-
-      setBeginnerFirstVideo: (state, action) => {
+    setSidebarTabIndex: (state, action) => {
+      state.sidebarTabIndex = action.payload;
+    },
+    setBeginnerFirstVideo: (state, action) => {
       state.beginnerFirstVideo = action.payload;
     },
-        setCourseType: (state, action) => {
+    setCourseType: (state, action) => {
       state.courseType = action.payload;
     },
-            setIsLocked: (state, action) => {
+    setIsLocked: (state, action) => {
       state.isLocked = action.payload;
     },
-              setVideoLevel: (state, action) => {
+    setVideoLevel: (state, action) => {
       state.videoLevel = action.payload;
     },
     setShouldPlayFirstVideo: (state, action) => {
       state.shouldPlayFirstVideo = action.payload;
     },
-
-    setPlanId: (state, actions) => {
-      state.planId = actions.payload;
+    setPlanId: (state, action) => {
+      state.planId = action.payload;
     },
-    setPlanType: (state, actions) => {
-      state.planType = actions.payload;
+    setPlanType: (state, action) => {
+      state.planType = action.payload;
     },
-    setPlanPrice: (state, actions) => {
-      state.planPrice = actions.payload;
+    setPlanPrice: (state, action) => {
+      state.planPrice = action.payload;
     },
-    setUsdPrice: (state, actions) => {
-      state.usdPrice = actions.payload;
+    setUsdPrice: (state, action) => {
+      state.usdPrice = action.payload;
     },
-    setIsIndia:(state, actions) => {
-      state.isIndia = actions.payload;
+    setIsIndia: (state, action) => {
+      state.isIndia = action.payload;
     },
-    setIntroductoryVideoscount: (state, actions) => {
-      state.introductoryVideosCount = actions.payload;
+    setIntroductoryVideoscount: (state, action) => {
+      state.introductoryVideosCount = action.payload;
     },
-    setBookmarkCount: (state, actions) => {
-      state.bookmarkCount = actions.payload;
+    setBookmarkCount: (state, action) => {
+      state.bookmarkCount = action.payload;
     },
     setSubmoduleId: (state, action) => {
-      state.submoduleId = action.payload
+      state.submoduleId = action.payload;
     },
     setCourseId: (state, action) => {
-      state.courseId = action.payload
+      state.courseId = action.payload;
     },
     setUpdatedPercentageWatched: (state, action) => {
-      state.updatedPercentageWatched = action.payload
+      state.updatedPercentageWatched = action.payload;
     },
     setVideoIdOfcurrentVideo: (state, action) => {
-      state.videoIdOfCurrentVideo = action.payload
+      state.videoIdOfCurrentVideo = action.payload;
     },
     setFirstVideoId: (state, action) => {
-      state.firstVideoId = action.payload
+      state.firstVideoId = action.payload;
     },
     setSearchValue: (state, action) => {
-      state.searchValue = action.payload
+      state.searchValue = action.payload;
     },
     setSearchHistory: (state, action) => {
-      state.searchHistory = action.payload
+      state.searchHistory = action.payload;
     },
     setVideoTitle: (state, action) => {
-      state.videoTitle = action.payload
+      state.videoTitle = action.payload;
     },
     setPaymentSuccess: (state, action) => {
-      state.paymentSuccess = action.payload
-    }
+      state.paymentSuccess = action.payload;
+    },
+    // Add this to store full course data
+    setCourseData: (state, action) => {
+      state.courseData = action.payload;
+    },
+    clearPlanData: (state) => {
+      state.planId = null;
+      state.planType = null;
+      state.planPrice = null;
+      state.usdPrice = null;
+      state.courseData = null; // Clear course data too
+    },
   },
 })
 
-export const { setVideoIdOfcurrentVideo,setVideoTitle, setPaymentSuccess,
+export const { 
+  setVideoIdOfcurrentVideo,
+  setVideoTitle, 
+  setPaymentSuccess,
   setSearchValue,
   setSearchHistory,
   setVideoLevel,
   setIsIndia,
-    setCourseType,
+  clearPlanData,
+  setCourseType,
   setShouldPlayFirstVideo,
   setUpdatedPercentageWatched,
   setSidebarTabIndex,
-   setBeginnerFirstVideo,
+  setBeginnerFirstVideo,
   setCourseId,
-  setFirstVideoId, setPlanId, setPlanPrice, setPlanType,setUsdPrice, setIntroductoryVideoscount,
-  setBookmarkCount, setSubmoduleId,setIsLocked } = generalSlice.actions
+  setFirstVideoId, 
+  setPlanId, 
+  setPlanPrice, 
+  setPlanType,
+  setUsdPrice, 
+  setIntroductoryVideoscount,
+  setBookmarkCount, 
+  setSubmoduleId,
+  setIsLocked,
+  setCourseData // Export this new action
+} = generalSlice.actions
 
 export default generalSlice.reducer

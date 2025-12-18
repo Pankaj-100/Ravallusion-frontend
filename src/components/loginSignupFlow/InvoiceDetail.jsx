@@ -93,7 +93,7 @@ function InvoiceDetail({ open, setOpen, onSuccess }) {
               onClick={handleSubmit}
               disabled={isLoading || isFetching}
             >
-              {isLoading ? "Subscribing..." : "Subscribe"}
+              {isLoading ? "Enrolling..." : "Enroll"}
             </Button>
           </div>
         </div>

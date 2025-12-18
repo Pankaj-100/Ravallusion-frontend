@@ -6,14 +6,42 @@ import Image from "next/image";
 import { GlowButton } from "../common/CustomButton";
 import { ArrowRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setPlanId,
+  setPlanPrice,
+  setPlanType,
+  setUsdPrice,
+  setCourseData, // Add this import
+} from "@/store/slice/general";
 
 const CourseCard = ({ course }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const isIndia = useSelector((state) => state.general.isIndia);
 
   if (!course) return null;
 
   const handleCardClick = () => {
     router.push(`/courses/${course._id}`);
+  };
+
+  const handleEnrollClick = (e) => {
+    e.stopPropagation();
+    
+    // Dispatch course details to Redux
+    dispatch(setPlanId(course._id));
+    dispatch(setPlanType(course.title || course.heading));
+    dispatch(setPlanPrice(course.inr_price));
+    dispatch(setUsdPrice(course.usd_price));
+    // Add this line to dispatch full course data
+    dispatch(setCourseData(course));
+    
+    // Navigate to cart with course parameters
+    const courseName = course.title || course.heading || "Course";
+    router.push(
+      `/mycart?courseId=${course._id}&courseName=${encodeURIComponent(courseName)}&price=${course.inr_price}&usdPrice=${course.usd_price}`
+    );
   };
 
   return (
@@ -30,6 +58,7 @@ const CourseCard = ({ course }) => {
           alt={course.title}
           fill
           className="object-cover blur-[1px] brightness-10"
+          sizes="(max-width: 350px) 100vw, 350px"
         />
       </div>
 
@@ -45,15 +74,18 @@ const CourseCard = ({ course }) => {
         <div className="border-b-2 border-white/40 mt-10 absolute w-full"></div>
 
         {/* Course Image */}
-        <div className="mt-4 flex justify-center">
-          <Image
-            src={course.courseImage || "/logocard.png"}
-            alt={course.title}
-            width={180}
-            height={180}
-            className="object-contain"
-          />
-        </div>
+{/* Course Image - Fixed size with crop */}
+<div className="mt-4 flex justify-center">
+  <div className="relative w-[120px] h-[120px] rounded-lg overflow-hidden">
+    <Image
+      src={course.courseImage || "/logocard.png"}
+      alt={course.title}
+      fill
+      className="object-cover"
+      sizes="120px"
+    />
+  </div>
+</div>
 
         {/* Description Section */}
         <div className="mt-6 text-left w-full">
@@ -69,14 +101,14 @@ const CourseCard = ({ course }) => {
         <div className="mt-6 flex items-center gap-2">
           <p className="text-md text-[#FFFFFFCC]">Price:</p>
           <p className="text-lg font-semibold text-white border-2 px-4 py-1 rounded-lg">
-            ₹{course.price}/-
+            {isIndia ? `₹${course.inr_price}/-` : `$${course.usd_price}`}
           </p>
         </div>
 
         {/* Enroll Button */}
         <GlowButton 
-          className="mt-6 w-full py-6 text-xl rounded-xl font-bold"
-          onClick={(e) => e.stopPropagation()}
+          className="mt-6 w-full py-6 text-xl rounded-xl font-bold hover:scale-105 transition-transform"
+          onClick={handleEnrollClick}
         >
           Enroll now <ArrowRightIcon className="ml-2 !h-6 !w-8" />
         </GlowButton>

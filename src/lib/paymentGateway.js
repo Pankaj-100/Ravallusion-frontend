@@ -16,7 +16,7 @@ export const handleClick = async ({ planId, activePaymentGateway }) => {
     initializeSDK();
     let sessionId;
     try {
-      const res = await axios.post("/api/v1/order/cash-free", { plan: planId });
+      const res = await axios.post("/api/v1/order/cash-free", { courseId: planId });
       sessionId = res?.data?.data?.payment_session_id;
     } catch (error) {
       console.log(error);
@@ -75,7 +75,7 @@ export const handleClick = async ({ planId, activePaymentGateway }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ plan: planId }),
+      body: JSON.stringify({ courseId: planId }),
     });
     const res = await response.json();
     if (!response.ok) {

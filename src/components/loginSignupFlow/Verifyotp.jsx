@@ -53,7 +53,7 @@ const VerifyOtp = () => {
                 router.push("/dashboard");
             }
             else if (!hasSubscription && planId) {
-                router.push(`/mycart?planId=${planId}&planType=${planType}&price=${planPrice}`);
+                router.push(`/mycart?courseId=${planId}&planType=${planType}&price=${planPrice}`);
             }
             else{
                 router.push("/subscription-plan");
@@ -93,7 +93,7 @@ const VerifyOtp = () => {
 
     return (
         <>
-            <div className="mx-4 p-10 rounded-[28px] bg-[var(--card-bg)] backdrop-blur-lg">
+            <div className="mx-4 p-10 rounded-[28px] bg-[var(--card-bg)] backdrop-blur-lg mt-28">
                 <Button variant="default" className="bg-transparent hover:bg-[var(--navy-blue)] mb-[30px] -ml-4" onClick={() => router.push("/login")}>
                     <ArrowLeft /> Back
                 </Button>

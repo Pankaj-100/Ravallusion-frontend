@@ -10,9 +10,21 @@ import { DownloadIcon } from "@/lib/svg_icons";
 import ModulesList from "@/components/common/ModulesList";
 import { useInView, useScroll } from "framer-motion";
 import LandingContainer from "@/components/common/LandingContainer";
+import { useRouter } from "next/navigation"; // Add this
+import { useDispatch, useSelector } from "react-redux"; // Add this
+import { 
+  setPlanId,
+  setPlanPrice,
+  setPlanType,
+  setUsdPrice,
+  setCourseData
+} from "@/store/slice/general"; // Add this
 
 const CourseDetailPage = () => {
   const { courseId } = useParams();
+  const router = useRouter(); // Add this
+  const dispatch = useDispatch(); // Add this
+  const isIndia = useSelector((state) => state.general.isIndia); // Add this
   const [isClient, setIsClient] = useState(false);
   const container = useRef(null);
   const inViewRef = useRef(null);
@@ -39,6 +51,24 @@ const CourseDetailPage = () => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Add this EXACT SAME function as CourseCard
+  const handleEnrollClick = () => {
+    if (!course) return;
+    
+    // Dispatch course details to Redux (SAME AS CourseCard)
+    dispatch(setPlanId(course._id));
+    dispatch(setPlanType(course.title || course.heading));
+    dispatch(setPlanPrice(course.inr_price));
+    dispatch(setUsdPrice(course.usd_price));
+    dispatch(setCourseData(course));
+    
+    // Navigate to cart with course parameters (SAME AS CourseCard)
+    const courseName = course.title || course.heading || "Course";
+    router.push(
+      `/mycart?courseId=${course._id}&courseName=${encodeURIComponent(courseName)}&price=${course.inr_price}&usdPrice=${course.usd_price}`
+    );
+  };
 
   if (isLoading) {
     return <PageLoader />;
@@ -106,12 +136,16 @@ const CourseDetailPage = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-4 items-center flex-wrap">
-                <GlowButton className="!p-5 !py-5 !text-base 2xl:!text-lg !rounded-xl w-full">
+                {/* Update this button to use the SAME functionality */}
+                <GlowButton 
+                  className="!p-5 !py-5 !text-base 2xl:!text-lg !rounded-xl w-full"
+                  onClick={handleEnrollClick} // Add onClick here
+                >
                   Enroll Now
                 </GlowButton>
                 <CustomButton 
                   className="!p-5 !py-5 !text-base 2xl:!text-lg !rounded-xl primary-btn flex items-center gap-2" 
-                //   onClick={handleDownload}
+                  onClick={handleDownload} // Uncomment this
                 >
                   Download Curriculum <DownloadIcon />
                 </CustomButton>

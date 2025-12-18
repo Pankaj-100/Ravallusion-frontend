@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState } from 'react';
 import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';
@@ -23,8 +23,11 @@ const Login = () => {
     const [emailError, setEmailError] = useState('');
     const [isOpenLogout, setIsOpenLogout] = useState(false);
 
-    const { planId, planType, planPrice } = useSelector((state) => state.general);
+    // Get all course data from Redux
+    const { planId, planType, planPrice, usdPrice, courseData } = useSelector((state) => state.general);
+    const isIndia = useSelector((state) => state.general.isIndia);
     const isChecked = useSelector((state) => state.signInState.keepMeSignedIn);
+    
     const [hasSubscription] = useLazyHasSubscriptionQuery();
     const [signin, { isLoading }] = useSigninMutation();
     const [switchDevice, { isLoading: switchDeviceLoading }] = useSwitchDeviceMutation();
@@ -70,9 +73,14 @@ const Login = () => {
             const hasPlan = subs?.data?.data?.hasSubscription;
             dispatch(setHasSubscription(hasPlan));
 
-           // toast.success(response?.message);
-             toast.success("OTP sent to your registered email.");
-            route.push('/verify-otp');
+            toast.success("OTP sent to your registered email.");
+            
+            // Redirect to verify-otp with course data
+            if (planId) {
+                route.push(`/verify-otp?courseId=${planId}`);
+            } else {
+                route.push('/verify-otp');
+            }
         } catch (err) {
             console.error("API Call Failed:", err);
             toast.error("Invalid Email! Please try again.");
@@ -112,7 +120,8 @@ const Login = () => {
             if (hasPlan) {
                 route.push('/dashboard');
             } else if (!hasPlan && planId) {
-                route.push(`/mycart?planId=${planId}&planType=${planType}&price=${planPrice}`);
+                // Pass all course data in URL or keep in Redux
+                route.push(`/mycart?courseId=${planId}&planType=${planType}&price=${planPrice}`);
             } else {
                 route.push(`/subscription-plan`);
             }
@@ -125,12 +134,19 @@ const Login = () => {
 
     return (
         <>
-            <div className={`w-full sm:min-w-[500px] sm:w-auto ${planId && "mt-40 md:mt-20 min-h-[750px] sm:min-h-[500px] lg:min-h-[500px]"}`}>
+            <div className={`w-full mt-20 sm:min-w-[500px] sm:w-auto ${planId && "mt-40 md:mt-20 min-h-[750px] sm:min-h-[500px] lg:min-h-[500px]"}`}>
                 {planId && (
-                    <SubscriptionDetails price={planPrice} courseType={planType} />
+                    // Pass all course data to SubscriptionDetails
+                    <SubscriptionDetails 
+                        price={planPrice} 
+                        usd_price={usdPrice}
+                        courseType={planType} 
+                        isIndia={isIndia}
+                        courseData={courseData} // Add this to show image and points
+                    />
                 )}
 
-                <div className='mx-4 px-4 py-5 lg:p-10 rounded-[28px] bg-[var(--card-bg)] backdrop-blur-lg mt-4'>
+                <div className='mx-4 px-4 py-5 lg:p-10 mt-4  rounded-[28px] bg-[var(--card-bg)] backdrop-blur-lg '>
                     <h2 className='text-center text-2xl md:text-[2.13rem] font-bold mb-[30px]'>Login to continue</h2>
 
                     <form onSubmit={handleSignIn}>

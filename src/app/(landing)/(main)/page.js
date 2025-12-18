@@ -27,14 +27,14 @@ export default function Home() {
   const { data: heroSection, isLoading: heroLoading } = useGetHeroSectionQuery();
   const { data: carouselSection, isLoading: carouselLoading } = useGetLandingCarouselQuery();
   const { data: latestTutorialSection, isLoading: latestTutorialLoading } = useGetLatestTutorialQuery();
-  const { data: curriculumSection, isLoading: curriculumLoading } = useGetCurriculumQuery();
-  const { data: moduleSection, isloading: moduleLoading } = useGetModuleQuery();
-  const { data: planSection, isLoading: planLoading } = useGetPlanDataQuery();
+  // const { data: curriculumSection, isLoading: curriculumLoading } = useGetCurriculumQuery();
+  // const { data: moduleSection, isloading: moduleLoading } = useGetModuleQuery();
+  // const { data: planSection, isLoading: planLoading } = useGetPlanDataQuery();
   const { data: mentorSection, isLoading: mentorLoading } = useGetMentorDataQuery();
   const { data: certificateSection, isLoading: certificateLoading } = useGetCertificateQuery();
   const { data: faqSection, isLoading: faqLoading } = useGetFaqQuery();
 
-  const loading = heroLoading || faqLoading || certificateLoading || mentorLoading || planLoading || moduleLoading || curriculumLoading || latestTutorialLoading || carouselLoading
+  const loading = heroLoading || faqLoading || certificateLoading || mentorLoading ||  latestTutorialLoading || carouselLoading
 
   return loading ? (
     <PageLoader />
@@ -44,10 +44,7 @@ export default function Home() {
       <HeroSection data={heroSection?.data?.heroSection} />
       <MainCarousel data={carouselSection?.data?.carousals} />
       <TutorialsSection data={latestTutorialSection?.data?.tutorials} />
-      <CourseSection  />
-      {/* <PlansSection plans={planSection?.data?.plans} /> */}
-      {/* <ModuleSection modules={moduleSection?.data?.modules} curriculum={curriculumSection?.data?.curriculum} /> */}
-      
+      <CourseSection  />      
       <MentorsSection mentor={mentorSection?.data?.mentor} />
       <CertificateSection certificate={certificateSection?.data?.certificate} />
       <FAQSection faqs={faqSection?.data?.faqs} />

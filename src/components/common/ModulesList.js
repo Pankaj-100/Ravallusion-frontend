@@ -135,7 +135,7 @@ const ModulesList = ({ scrollYProgress, modules, inView }) => {
     const targetScale = 1 - (modulesList.length - index) * 0.02;
     return (
       <ModuleCard
-        key={`module-${item._id || index}-${Date.now()}`} // Add timestamp to force re-render on reload
+        key={`module-${item._id || index}-${Date.now()}`} 
         item={item}
         index={index}
         progress={scrollYProgress}
