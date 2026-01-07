@@ -149,10 +149,10 @@ const CourseCard = ({
     <>
       {!isExpanded ? (
         <div
-          className="flex gap-x-3 px-3 items-center cursor-pointer"
+          className="flex gap-x-2 px-3 items-center cursor-pointer"
           onClick={handleExpand}
         >
-          <div className="rounded-xl w-40 h-20 relative">
+          <div className="rounded-xl w-36 h-20 relative">
             <Image
               src={img}
               alt="video png"
@@ -162,7 +162,7 @@ const CourseCard = ({
           </div>
 
           <div className="flex-grow w-32">
-            <h1 className="text-lg font-semibold mb-1">{title}</h1>
+            <h1 className="text-md font-semibold mb-1 truncate">{title}</h1>
             <p className="text-md truncate whitespace-nowrap">
               {videoCount} videos 
             </p>
