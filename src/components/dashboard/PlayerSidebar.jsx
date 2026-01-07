@@ -12,99 +12,93 @@ import {
   useGetBookmarkQuery,
   useGetIntroductoryQuery,
 } from "@/store/Api/introAndBookmark";
-import { useGetSubscribedPlanCourseQuery } from "@/store/Api/course";
-import { useGetPlanDataQuery } from "@/store/Api/home";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { setCourseId, setFirstVideoId, setCourseType } from "@/store/slice/general";
 import { setCourse } from "@/store/slice/course";
 import Progresscard from "../dashboard/Progresscard";
-import { useRouter } from "next/navigation";
 import RecommandVideo from "./RecommandVideo";
-import { useGetSubscriptionDetailQuery } from "@/store/Api/course";
+import { useGetCourseDetailsQuery } from "../../store/Api/courseslist";
+
 const PlayerSidebar = () => {
-  const [beginnerPlanId, setBeginnerPlanId] = useState(null);
-  const [advancedPlanId, setAdvancedPlanId] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [playingVideoId, setPlayingVideoId] = useState(null);
 
-  const route = useRouter();
   const dispatch = useDispatch();
-  const path = usePathname();
+  const pathname = usePathname();
+  
+  // Get courseId from Redux store AND from URL
+  const reduxCourseId = useSelector((state) => state.general.courseId);
+  
+  // Extract courseId from URL on page load
+  useEffect(() => {
+    // Extract courseId from URL path: /dashboard/player-dashboard/{courseId}?videoId=...
+    const pathParts = pathname.split('/');
+    const courseIdFromUrl = pathParts[pathParts.length - 1];
+    
+    // Remove query parameters if any
+    const cleanCourseId = courseIdFromUrl.split('?')[0];
+    
+    console.log("Extracted courseId from URL:", cleanCourseId);
+    
+    // If we have a valid courseId from URL and it's different from Redux
+    if (cleanCourseId && cleanCourseId !== reduxCourseId && 
+        cleanCourseId !== "beginner" && cleanCourseId !== "advanced") {
+      dispatch(setCourseId(cleanCourseId));
+      dispatch(setCourseType(cleanCourseId));
+    }
+  }, [pathname, dispatch, reduxCourseId]);
+  
+  // Use courseId from Redux (which now has value from URL on reload)
+  const courseId = reduxCourseId;
+  
+  console.log("PlayerSidebar - Course ID:", courseId);
+  
+  // Fetch course details using the courseId
+  const { data: courseData, isLoading: courseLoading } = useGetCourseDetailsQuery(courseId, {
+    skip: !courseId,
+  });
 
-  const { data: plantype } = useGetSubscriptionDetailQuery();
-  const planType = plantype?.data?.subscriptionDetails?.planType;
-  const { data: plansData } = useGetPlanDataQuery();
+  console.log("PlayerSidebar - Course Data:", courseData);
+  
+  const course = courseData || null;
+
   const { data } = useGetBookmarkQuery();
   const { data: introductoryData } = useGetIntroductoryQuery();
 
-  // Get both beginner and advanced courses
-  const { data: beginnerCourseData, isLoading: beginnerLoading } =
-    useGetSubscribedPlanCourseQuery(beginnerPlanId, { skip: !beginnerPlanId });
-  const { data: advancedCourseData, isLoading: advancedLoading } =
-    useGetSubscribedPlanCourseQuery(advancedPlanId, { skip: !advancedPlanId });
-
-  const beginnerCourse = beginnerCourseData?.data?.course;
-  const advancedCourse = advancedCourseData?.data?.course;
-
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
-  const tooltype = useSelector((state) => state.general.courseType);
-
+  
   const introductoryVideos = introductoryData?.data?.introductoryVideos || [];
   const bookmarkedVideos = data?.bookmarks || [];
 
-  // Set plan IDs for both beginner and advanced
-  useEffect(() => {
-    if (plansData?.data?.plans) {
-      const beginnerPlan = plansData.data.plans.find((plan) => plan.level === 1);
-      const advancedPlan = plansData.data.plans.find((plan) => plan.level === 2);
-      setBeginnerPlanId(beginnerPlan?._id);
-      setAdvancedPlanId(advancedPlan?._id);
-    }
-  }, [plansData]);
-
+  // Set active tab index
   useEffect(() => {
     setActiveIndex(sidebarTabIndex);
   }, [sidebarTabIndex]);
 
-  // Determine course type based on URL
-  const courseType = path.includes("beginner") ? "beginner" : "advanced";
-//  dispatch(setCourseType("beginner"));
-  // Set courseId and firstVideoId based on course type and tool type
+  // Set course data in Redux when course is loaded
   useEffect(() => {
-    console.log("useEffect triggered with:", { courseType, tooltype });
-    if (courseType === "beginner" && beginnerCourse) {
-      dispatch(setCourseId(beginnerCourse?._id));
-      dispatch(setCourse(beginnerCourse));
-     
-      // Set first video ID based on tool type
-      if (tooltype === "photoshop") {
-        const firstVideoId = beginnerCourse?.modules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
-           
-        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
-      } else if (tooltype === "premier-pro") {
-        const firstVideoId = beginnerCourse?.modules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
- 
-        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
-      }
-    } else if (courseType === "advanced" && advancedCourse) {
-      dispatch(setCourseId(advancedCourse?._id));
-      dispatch(setCourse(advancedCourse));
+    if (course && courseId) {
+      console.log("Setting course data:", { courseId, course });
+      dispatch(setCourse(course));
       
-      // Set first video ID based on tool type
-      if (tooltype === "photoshop") {
-        const firstVideoId = advancedCourse?.modules?.[0]?.submodules?.[0]?.videos?.[0]?._id;
-       
-        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
-      } else if (tooltype === "premier-pro") {
-        const firstVideoId = advancedCourse?.modules?.[1]?.submodules?.[0]?.videos?.[0]?._id;
-      
-        if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+      // Set first video ID from the first module's first video
+      if (course.modules && course.modules.length > 0) {
+        const firstModule = course.modules[0];
+        // Check if modules have videos directly or through submodules
+        if (firstModule.videos && firstModule.videos.length > 0) {
+          const firstVideoId = firstModule.videos[0]._id;
+          if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+        } else if (firstModule.submodules && firstModule.submodules.length > 0) {
+          const firstSubmodule = firstModule.submodules[0];
+          if (firstSubmodule.videos && firstSubmodule.videos.length > 0) {
+            const firstVideoId = firstSubmodule.videos[0]._id;
+            if (firstVideoId) dispatch(setFirstVideoId(firstVideoId));
+          }
+        }
       }
     }
-     dispatch(setCourse(beginnerCourse));
-
-  }, [beginnerCourse, advancedCourse, courseType, tooltype, dispatch]);
+  }, [course, courseId, dispatch]);
 
   return (
     <>
@@ -135,51 +129,54 @@ const PlayerSidebar = () => {
         />
       </div>
 
-<div className="py-2 bg-[#181F2B] rounded-2xl h-[88%] mb-2  overflow-y-auto custom-scrollbar-hover ">   
-  <div className=" bg-[#181F2B] rounded-2xl h-[70vh]  ">   
-       {activeIndex === 0 && (
-          <>
-            {courseType === "beginner" && beginnerCourse && (
-              <CourseModuleList
-                course={beginnerCourse}
-                isLoading={beginnerLoading}
-                playingVideoId={playingVideoId}
-                setPlayingVideoId={setPlayingVideoId}
-              />
-            )}
-            {courseType === "advanced" && advancedCourse && (
-              <CourseModuleList
-                course={advancedCourse}
-                isLoading={advancedLoading}
-                playingVideoId={playingVideoId}
-                setPlayingVideoId={setPlayingVideoId}
-              />
-            )}
-           {courseType==="beginner"&& planType==="Beginner"?<RecommandVideo /> : ""}
-         <Progresscard />
-           
-          </>
-        )}
+      <div className="py-2 bg-[#181F2B] rounded-2xl h-[88%] mb-2 overflow-y-auto custom-scrollbar-hover">   
+        <div className="bg-[#181F2B] rounded-2xl h-[70vh]">   
+          {activeIndex === 0 && (
+            <>
+              {!courseId ? (
+                <div className="text-center py-8 text-gray-400">
+                  Please select a course from the navbar
+                </div>
+              ) : courseLoading ? (
+                <div className="text-center py-8 text-gray-400">
+                  Loading course...
+                </div>
+              ) : course ? (
+                <CourseModuleList
+                  course={course}
+                  isLoading={courseLoading}
+                  playingVideoId={playingVideoId}
+                  setPlayingVideoId={setPlayingVideoId}
+                />
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  Course not found or not enrolled
+                </div>
+              )}
+              <RecommandVideo />
+              {/* <Progresscard /> */}
+            </>
+          )}
 
-        {activeIndex === 1 && (
-          <IntroductoryList
-            heading={"Learn properly"}
-            subItems={introductoryVideos}
-            playingVideoId={playingVideoId}
-            setPlayingVideoId={setPlayingVideoId}
-          />
-        )}
+          {activeIndex === 1 && (
+            <IntroductoryList
+              heading={"Learn properly"}
+              subItems={introductoryVideos}
+              playingVideoId={playingVideoId}
+              setPlayingVideoId={setPlayingVideoId}
+            />
+          )}
 
-        {activeIndex === 2 && (
-          <BookmarkedList
-            heading={"Bookmarked videos"}
-            subItems={bookmarkedVideos}
-            playingVideoId={playingVideoId}
-            setPlayingVideoId={setPlayingVideoId}
-          />
-        )}
+          {activeIndex === 2 && (
+            <BookmarkedList
+              heading={"Bookmarked videos"}
+              subItems={bookmarkedVideos}
+              playingVideoId={playingVideoId}
+              setPlayingVideoId={setPlayingVideoId}
+            />
+          )}
+        </div>
       </div>
-       </div>
     </>
   );
 };

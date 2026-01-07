@@ -1442,6 +1442,13 @@ export const CrossIcon = ({ width = 24, height = 25 }) => (
   </svg>
 );
 
+export const Down = () => (
+  <svg width="24" height="24" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6L7 9L10 6" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+);
+
 export const MinusIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

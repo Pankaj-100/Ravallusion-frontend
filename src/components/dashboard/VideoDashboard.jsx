@@ -30,12 +30,12 @@ const VideoDashboard = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const [isCompleted, setIsCompleted] = useState(false);
-const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
+  const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
 
   const videoId = searchParams.get("videoId");
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
   const isLocked = useSelector((state) => state.general.isLocked);
-  const { courseId, firstVideoId, videoLevel } = useSelector(
+  const { courseId, firstVideoId } = useSelector(
     (state) => state.general
   );
 
@@ -175,6 +175,11 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
     router.push('/Upgrade-plan');
   };
 
+  // Check if video is locked based on course enrollment or subscription
+  // Now we need a new logic to check if user has access to the video
+  // For now, we'll check if the video is from an enrolled course
+  // You might need to adjust this based on your new course enrollment system
+  
   // Force video player to remount when videoUrl changes
   const videoPlayerKey = videoUrl || "no-video";
 
@@ -185,75 +190,8 @@ const { refetch: refetchOverallProgress } = useGetOverallCourseProgressQuery();
       {isLoading || courseProgressLoading ? (
         // ⏳ While fetching course/video data
         <SimpleLoader />
-      ) : planType === "Beginner" && videoLevel === 2 ? (
-        // 🚫 Upgrade plan message (higher priority) - Updated design
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-          <div 
-            className="relative rounded-[16px] border border-transparent w-full max-w-md mx-auto"
-            style={{
-              background: 
-                "linear-gradient(0deg, #192029, #192029), " +
-                "linear-gradient(291.43deg, rgba(0,0,0,0) 45.59%, rgba(133,116,246,0.35) 96.1%)",
-              backgroundOrigin: "border-box",
-              backgroundClip: "padding-box, border-box",
-              boxShadow:
-                "inset 2px 4px 11.9px 0px rgba(255,255,255,0.10), " +
-                "inset -4px -2px 10.1px 0px rgba(255,255,255,0.10)",
-              backdropFilter: "blur(25.2px)",
-            }}
-          >
-            {/* Border gradient overlay */}
-            <div
-              className="absolute inset-0 rounded-[16px] p-px -z-10"
-              style={{
-                background: "linear-gradient(92.36deg, rgba(255,255,255,0.25) 2.51%, rgba(255,255,255,0) 48.45%)",
-                mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                maskComposite: "exclude",
-                WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                WebkitMaskComposite: "xor",
-              }}
-            />
-            
-            {/* Content container */}
-            <div className="p-4 sm:p-[30px] relative z-10">
-              {/* Content */}
-              <div className="flex flex-col gap-4 sm:gap-[30px]">
-                <div className="flex-shrink-0 mt-1">
-                  <Premium />
-                </div>
-                
-                {/* Heading section */}
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-[24px] leading-[28px] sm:leading-[32px] font-semibold text-white tracking-[-0.01em] break-words">
-                      Upgrade your subscription plan
-                    </h3>
-                    <p className="text-[13px] sm:text-[14px] leading-[18px] sm:leading-[20px] text-white/70 mt-1.5 break-words">
-                      This is applicable only for Advance plan users
-                    </p>
-                  </div>
-                </div>
-
-                {/* CTA Button */}
-                <button
-                  onClick={handleUpgrade}
-                  className="w-full h-12 sm:h-14 rounded-xl font-semibold text-white text-[14px] sm:text-[16px] relative overflow-hidden"
-                  style={{
-                    background: "linear-gradient(90deg, #6E6CF6 0%, #9A8CF6 100%)",
-                    boxShadow: "inset 0px 1px 0px rgba(255, 255, 255, 0.25)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                  }}
-                >
-                  Upgrade plan
-                  {/* Subtle shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       ) : isLocked ? (
-        // 🚫 Locked video message
+        // 🚫 Locked video message - Only show this if video is locked
         <div className="absolute inset-0 flex items-center justify-center px-4">
           <div className="bg-white max-w-md w-full p-6 rounded-2xl shadow-xl border border-yellow-300 text-center animate-in fade-in zoom-in duration-300">
             <div className="flex justify-center mb-4">

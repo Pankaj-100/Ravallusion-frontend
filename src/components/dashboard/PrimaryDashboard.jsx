@@ -30,17 +30,16 @@ const PrimaryDashboard = () => {
     : [];
 
   const handleClick = (videoId, level) => {
-    if (level == 1) {
-      dispatch(setSidebarTabIndex(0));
-      router.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
-    } else if (level == 2) {
-      dispatch(setSidebarTabIndex(0));
-      router.push(`/dashboard/player-dashboard/advance?videoId=${videoId}`);
-    } else {
+    // if (level == 1) {
+    //   dispatch(setSidebarTabIndex(0));
+    //   router.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
+    // } else if (level == 2) {
+    //   dispatch(setSidebarTabIndex(0));
+    //   router.push(`/dashboard/player-dashboard/advance?videoId=${videoId}`);
+    // } else {
       dispatch(setSidebarTabIndex(1));
       router.push(`/dashboard/player-dashboard/learn-properly?videoId=${videoId}`);
     }
-  };
 
   const leftImage = sideImages?.dashboardLeftImage;
   const rightImage = sideImages?.dashboardRightImage;

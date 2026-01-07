@@ -3,13 +3,15 @@ import CustomCarousel from "@/components/common/CustomCarousel";
 import PrimaryDashboard from "@/components/dashboard/PrimaryDashboard";
 import SkeletonVideoCard from "@/components/dashboard/SkeletonVideoCard";
 import TutorialCards from "@/components/dashboard/TutorialCards";
-import { useGetModuleOnPrimaryDashboardQuery } from "@/store/Api/primaryDashboard";
+import { useGetUserCoursesVideosQuery } from "@/store/Api/primaryDashboard";
 import React from "react";
 
-
 const Page = () => {
-  const { data, isLoading } = useGetModuleOnPrimaryDashboardQuery();
-  const videoData = data?.data?.content;
+  const { data, isLoading } = useGetUserCoursesVideosQuery();
+  const enrolledCourses = data?.enrolledCourses || [];
+  const otherCourses = data?.otherCourses || [];
+  const allCourses = [...enrolledCourses, ...otherCourses];
+  
   return <>
     <PrimaryDashboard />
 
@@ -25,9 +27,20 @@ const Page = () => {
           }
         </div> :
         (
-          videoData && videoData.map((item, i) => (
-            <TutorialCards key={i} title={item?.name} subItems={item?.videos} />
-          ))
+          allCourses.length > 0 ? 
+            allCourses.map((course, i) => (
+              <TutorialCards 
+                key={i} 
+                title={course?.title} 
+                subItems={course?.videos || []} 
+                courseId={course?.courseId}
+                isEnrolled={course?.isEnrolled}
+              />
+            ))
+          :
+          <div className="text-center py-8 text-gray-400">
+            No courses found
+          </div>
         )
     }
 

@@ -1,125 +1,123 @@
-  "use client";
-  import { mapToObject, objectToMap } from "@/lib/functions";
-  import { Bookmarked, Lock, OrangePlay } from "@/lib/svg_icons";
-  import { useDeleteBookmarkMutation } from "@/store/Api/introAndBookmark";
-  import {
-    PremiumIcon
-  } from "@/lib/svg_icons";
-  import { setIsLocked ,setVideoLevel} from "@/store/slice/general";
-  import {
-    useGetCourseProgressQuery,
-    useGetVideoProgressQuery,
-  } from "@/store/Api/videoProgress";
-  import { MessageSquareWarning } from "lucide-react";
-  import Image from "next/image";
-  import { usePathname, useRouter, useSearchParams } from "next/navigation";
-  import { useEffect, useState } from "react";
-  import { useSelector } from "react-redux";
-  import { useDispatch } from 'react-redux';
-  export const IntroductoryList = ({
-    heading,
-    subItems,
-    setPlayingVideoId,
-    playingVideoId,
-    iscourse=false,
-  }) => {
-    const params = useSearchParams();
-    const videoId = params.get("videoId");
+"use client";
+import { mapToObject, objectToMap } from "@/lib/functions";
+import { Bookmarked, Lock, OrangePlay } from "@/lib/svg_icons";
+import { useDeleteBookmarkMutation } from "@/store/Api/introAndBookmark";
+import { PremiumIcon } from "@/lib/svg_icons";
+import { setIsLocked, setVideoLevel } from "@/store/slice/general";
+import {
+  useGetCourseProgressQuery,
+  useGetVideoProgressQuery,
+} from "@/store/Api/videoProgress";
+import { MessageSquareWarning } from "lucide-react";
+import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useDispatch } from 'react-redux';
 
-    useEffect(() => {
-      if (videoId) {
-        setPlayingVideoId(videoId);
-      }
-    }, [videoId]);
-    return (
-      <>
-        <h1 className="text-lg font-semibold mb-7 px-3">{heading}</h1>
+export const IntroductoryList = ({
+  heading,
+  subItems,
+  setPlayingVideoId,
+  playingVideoId,
+  iscourse = false,
+}) => {
+  const params = useSearchParams();
+  const videoId = params.get("videoId");
 
-        <div className="flex flex-col gap-y-7">
-          {subItems &&
-            subItems.map((items) => (
+  useEffect(() => {
+    if (videoId) {
+      setPlayingVideoId(videoId);
+    }
+  }, [videoId]);
+  return (
+    <>
+      <h1 className="text-lg font-semibold mb-7 px-3">{heading}</h1>
+
+      <div className="flex flex-col gap-y-7">
+        {subItems &&
+          subItems.map((items) => (
+            <LessonCard
+              key={items._id}
+              introductory={true}
+              videoId={items._id}
+              isplaying={playingVideoId === items?._id}
+              onPlay={() => setPlayingVideoId(items?._id)}
+              thumbnail={items.thumbnailUrl}
+              title={items.title}
+              duration={`${String(items?.duration?.hours ?? 0).padStart(
+                2,
+                "0"
+              )}:${String(items?.duration?.minutes ?? 0).padStart(
+                2,
+                "0"
+              )}:${String(items?.duration?.seconds ?? 0).padStart(2, "0")}`}
+              description={items.description}
+            />
+          ))}
+      </div>
+    </>
+  );
+};
+
+export const BookmarkedList = ({
+  heading,
+  subItems,
+  setPlayingVideoId,
+  playingVideoId,
+}) => {
+  const params = useSearchParams();
+  const videoId = params.get("videoId");
+
+  useEffect(() => {
+    if (videoId) {
+      setPlayingVideoId(videoId);
+    }
+  }, [videoId]);
+  return (
+    <>
+      <h1 className="text-lg font-semibold mb-7 px-3">{heading}</h1>
+
+      <div className="flex flex-col gap-y-7">
+        {subItems.length > 0 ? (
+          subItems.map((items) => {
+            const timeDuration = items?.video?.duration;
+            return (
               <LessonCard
-                key={items._id}
-                introductory={true}
-                videoId={items._id}
-                isplaying={playingVideoId === items?._id}
-                onPlay={() => setPlayingVideoId(items?._id)}
-                thumbnail={items.thumbnailUrl}
-                title={items.title}
-                duration={`${String(items?.duration?.hours ?? 0).padStart(
+                key={items?.video?._id}
+                bookmark={true}
+                bookmarkedId={items?._id}
+                videoId={items?.video?._id}
+                thumbnail={items?.video?.thumbnailUrl}
+                title={items?.video?.title}
+                duration={`${String(timeDuration?.hours ?? 0).padStart(
                   2,
                   "0"
-                )}:${String(items?.duration?.minutes ?? 0).padStart(
+                )}:${String(timeDuration?.minutes ?? 0).padStart(
                   2,
                   "0"
-                )}:${String(items?.duration?.seconds ?? 0).padStart(2, "0")}`}
-                description={items.description}
+                )}:${String(timeDuration?.seconds ?? 0).padStart(2, "0")}`}
+                description={items?.video?.description}
+                isplaying={playingVideoId === items?.video?._id}
+                onPlay={(iscourse) => setPlayingVideoId(items?.video?._id)}
               />
-            ))}
-        </div>
-      </>
-    );
-  };
-
-  export const BookmarkedList = ({
-    heading,
-    subItems,
-    setPlayingVideoId,
-    playingVideoId,
-  }) => {
-    const params = useSearchParams();
-    const videoId = params.get("videoId");
-
-    useEffect(() => {
-      if (videoId) {
-        setPlayingVideoId(videoId);
-      }
-    }, [videoId]);
-    return (
-      <>
-        <h1 className="text-lg font-semibold mb-7 px-3">{heading}</h1>
-
-        <div className="flex flex-col gap-y-7">
-          {subItems.length > 0 ? (
-            subItems.map((items) => {
-              const timeDuration = items?.video?.duration;
-              return (
-                <LessonCard
-                  key={items?.video?._id}
-                  bookmark={true}
-                  bookmarkedId={items?._id}
-                  videoId={items?.video?._id}
-                  thumbnail={items?.video?.thumbnailUrl}
-                  title={items?.video?.title}
-                  duration={`${String(timeDuration?.hours ?? 0).padStart(
-                    2,
-                    "0"
-                  )}:${String(timeDuration?.minutes ?? 0).padStart(
-                    2,
-                    "0"
-                  )}:${String(timeDuration?.seconds ?? 0).padStart(2, "0")}`}
-                  description={items?.video?.description}
-                  isplaying={playingVideoId === items?.video?._id}
-                  onPlay={(iscourse) => setPlayingVideoId(items?.video?._id)}
-                />
-              );
-            })
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 px-6 text-center rounded-xl shadow-lg">
-              <MessageSquareWarning className="text-red-500 w-16 h-16 mb-4 animate-pulse" />
-              <h5 className="text-lg font-semibold text-[var(--neon-purple)] mb-2">
-                No Bookmarked Videos Found 📚
-              </h5>
-              <p className="text-sm text-gray-400 max-w-xs">
-                It looks like you haven&apos;t bookmarked any videos yet. Start exploring and add your favorites for quick access!
-              </p>
-            </div>
-
-          )}
-        </div>
-      </>
-    );
-  };
+            );
+          })
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 px-6 text-center rounded-xl shadow-lg">
+            <MessageSquareWarning className="text-red-500 w-16 h-16 mb-4 animate-pulse" />
+            <h5 className="text-lg font-semibold text-[var(--neon-purple)] mb-2">
+              No Bookmarked Videos Found 📚
+            </h5>
+            <p className="text-sm text-gray-400 max-w-xs">
+              It looks like you haven&apos;t bookmarked any videos yet. Start exploring and add your favorites for quick access!
+            </p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 export const LessonCard = ({
   videoId,
@@ -133,10 +131,10 @@ export const LessonCard = ({
   bookmark = false,
   introductory = false,
   onPlay,
-  allVideos = [],       
-  videoIndex = 0,       
-  allSubmodules = [],   
-  parentSubmoduleIndex,   
+  allVideos = [],
+  videoIndex = 0,
+  allSubmodules = [],
+  parentSubmoduleIndex,
   locked,
 }) => {
   const route = useRouter();
@@ -216,30 +214,52 @@ export const LessonCard = ({
   const fetchVideo = () => {
     if (!isVideoUnlocked && !introductory && !bookmark) return;
 
+    // Get current courseId from URL or Redux
+    const currentPath = window.location.pathname;
+    const pathParts = currentPath.split('/');
+    
+    // Find courseId in the URL path (should be the last part before query params)
+    let courseIdFromUrl = courseId; // Start with Redux courseId
+    
+    // Extract from URL if not in Redux
+    if (!courseIdFromUrl) {
+      const playerDashboardIndex = pathParts.indexOf('player-dashboard');
+      if (playerDashboardIndex !== -1 && pathParts[playerDashboardIndex + 1]) {
+        courseIdFromUrl = pathParts[playerDashboardIndex + 1];
+        // Remove query parameters if any
+        courseIdFromUrl = courseIdFromUrl.split('?')[0];
+      }
+    }
+
     if (introductory) {
+      // For introductory videos, use the old beginner route
       route.push(`/dashboard/player-dashboard/beginner?videoId=${videoId}`);
       onPlay();
       return;
     }
 
-    const levels = level == 1 ? "beginner" : "advanced";
-    route.push(`/dashboard/player-dashboard/${levels}?videoId=${videoId}`);
+    // For course videos, use courseId in the URL
+    if (courseIdFromUrl) {
+      route.push(`/dashboard/player-dashboard/${courseIdFromUrl}?videoId=${videoId}`);
+    }
     onPlay();
   };
 
   const removeBookmark = async () => {
     try {
       const res = await deleteBookmark({ bookmarkedId });
-      toast(res.message);
+      // Assuming you have a toast function
+      // toast(res.message);
+      console.log(res.message);
     } catch (error) {
       console.log(error);
-      toast.error(error?.data?.message || "Error while removing bookmark");
+      // toast.error(error?.data?.message || "Error while removing bookmark");
     }
   };
 
   return (
     <div
-      className="flex gap-x-3 items-center cursor-pointer px-3 "
+      className="flex gap-x-3 items-center cursor-pointer px-3 mb-3 "
       onClick={fetchVideo}
     >
       {/* Thumbnail + Lock */}
@@ -308,9 +328,9 @@ export const LessonCard = ({
             title
           )}
         </h1>
-        <p className="text-[10px] truncate whitespace-nowrap">
+        {/* <p className="text-[10px] truncate whitespace-nowrap">
           {isplaying ? "" : description}
-        </p>
+        </p> */}
       </div>
 
       {bookmark && (

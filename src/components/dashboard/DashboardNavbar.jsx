@@ -17,7 +17,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { setSidebarTabIndex,setCourseType,setShouldPlayFirstVideo } from  "@/store/slice/general";
+import { setSidebarTabIndex, setCourseType, setCourseId, setShouldPlayFirstVideo } from  "@/store/slice/general";
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -29,6 +29,7 @@ import { useGetUserDetailQuery } from "@/store/Api/auth";
 import { setSearchValue } from "@/store/slice/general";
 import { setSearchHistory } from "@/store/slice/general";
 import YourProgress from "../progress/YourProgress";
+import { useGetCoursesWithStatusQuery } from "../../store/Api/courseslist"; 
 
 const DashboardNavbar = () => {
   const pathname = usePathname();
@@ -45,6 +46,9 @@ const DashboardNavbar = () => {
   const { searchValue, searchHistory } = useSelector((state) => state.general);
   const { data } = useGetUserDetailQuery();
   const avatar = data?.data?.user?.avatar;
+  
+  // Use the new API to get courses with enrollment status
+  const { data: coursesData, isLoading: coursesLoading, error: coursesError } = useGetCoursesWithStatusQuery();
 
   useEffect(() => {
     if (pathname === "/dashboard") {
@@ -59,16 +63,17 @@ const DashboardNavbar = () => {
     } else if (pathname === "/dashboard/search") {
       setShow(true);
       setUrlPath("search");
-    } else if (
-      pathname === "/dashboard/player-dashboard/[advanced]" ||
-      "/dashboard/player-dashboard/[beginner]"
-    ) {
+    } else if (pathname.includes("/dashboard/player-dashboard/")) {
       setShow(true);
       setUrlPath("playerDashboard");
     } else {
       setShow(true);
     }
   }, [pathname]);
+
+  // Separate enrolled and not enrolled courses
+  const enrolledCourses = coursesData?.filter(course => course.isEnrolled) || [];
+  const notEnrolledCourses = coursesData?.filter(course => !course.isEnrolled) || [];
 
   return (
     <div
@@ -82,6 +87,9 @@ const DashboardNavbar = () => {
           setOpenSidebar={setOpenSidebar}
           openSidebar={openSidebar}
           urlpath={urlpath}
+          enrolledCourses={enrolledCourses}
+          notEnrolledCourses={notEnrolledCourses}
+          coursesLoading={coursesLoading}
         />
       )}
       {show ? (
@@ -111,13 +119,11 @@ const DashboardNavbar = () => {
             )}
             {urlpath === "playerDashboard" && (
               <>
-                {/* <h1 className="text-lg font-semibold mb-1">Opening file</h1> */}
-   <p
-  className="text-lg font-bold text-[#CDCED1] line-clamp-2 max-w-[90vw] lg:max-w-full"
->
-  {videoTitle}
-</p>
-
+                <p
+                  className="text-lg font-bold text-[#CDCED1] line-clamp-2 max-w-[90vw] lg:max-w-full"
+                >
+                  {videoTitle}
+                </p>
               </>
             )}
 
@@ -138,41 +144,21 @@ const DashboardNavbar = () => {
             <Image src="/logo.png" alt="logo" fill className="object-contain" />
           </div>
           <span className="hidden lg:inline lg:text-lg font-semibold whitespace-nowrap">
-  Ravallusion Academy
-</span>
+            Ravallusion Academy
+          </span>
         </div>
       )}
 
       <div className="flex gap-x-5 items-center my-auto">
-        {/* {urlpath != "search" && (
-          <div
-            className="p-3 border border-gray-600 relative cursor-pointer"
-            onClick={() => {
-              setSearchDialog(true), dispatch(setSearchValue(""));
-            }}
-          >
-            <EllipseOfSearch />
-            <SearchIcon size={24} />
-          </div>
-        )} */}
-
         <div className="hidden lg:flex gap-x-2">
-          {/* <BoxComponent
-            show={show}
-            icon={<CrownIcon />}
-            title={" VFX "}
-            title1={"Photoshop"}
-            title2={"Premier pro"}
-            href={"/dashboard/player-dashboard/advanced"}
-          /> */}
-
           <BoxComponent
             show={show}
             icon={<Gear />}
             title={"My Courses"}
-            title1={"Photoshop"}
-            title2={"Premier pro"}
-            href={"/dashboard/player-dashboard/beginner"}
+            enrolledCourses={enrolledCourses}
+            notEnrolledCourses={notEnrolledCourses}
+            coursesLoading={coursesLoading}
+            coursesError={coursesError}
           />
 
           <BoxComponent
@@ -183,8 +169,6 @@ const DashboardNavbar = () => {
             href={"/dashboard/introductory"}
           />
         </div>
-
-        {/* <YourProgress /> */}
 
         <ProfileComponent
           show={show}
@@ -208,7 +192,7 @@ const DashboardNavbar = () => {
   );
 };
 
-const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
+const SideBar = ({ openSidebar, setOpenSidebar, avatar, enrolledCourses, notEnrolledCourses, coursesLoading }) => {
   const sidebarVariants = {
     open: {
       x: 0,
@@ -234,6 +218,7 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
     open: { opacity: 1, pointerEvents: "auto" },
     closed: { opacity: 0, pointerEvents: "none" },
   };
+  
   return (
     <>
       <motion.div
@@ -245,7 +230,7 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
       />
 
       <motion.div
-        className="absolute bg-[var(--Surface)] w-72 pt-12 pb-8 px-4 h-screen top-0 left-0 z-20 lg:hidden"
+        className="absolute bg-[var(--Surface)] w-72 pt-12 pb-8 px-4 h-screen top-0 left-0 z-20 lg:hidden overflow-y-auto"
         initial="closed"
         animate={openSidebar ? "open" : "closed"}
         variants={sidebarVariants}
@@ -259,30 +244,63 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
         </div>
 
         <div className="flex flex-col gap-y-4">
-          <BoxComponentMobile
-            setOpenSidebar={setOpenSidebar}
-            href={"/dashboard/player-dashboard/advanced"}
-            show={show}
-            icon={<CrownIcon />}
-            title={"VFX"}
-            title1={"Photoshop"}
-            title2={"Premier pro"}
-          />
-          <BoxComponentMobile
-            setOpenSidebar={setOpenSidebar}
-            href={"/dashboard/player-dashboard/beginner"}
-            show={show}
-            icon={<Gear />}
-            title={"EDITORIAL"}
-            title1={"Photoshop"}
-            title2={"Premier pro"}
-          />
+          {/* Enrolled Courses */}
+          {coursesLoading ? (
+            <div className="px-4 py-3 bg-[#040C19] border border-[var(--neon-purple)] text-center">
+              <p className="text-sm text-gray-400">Loading courses...</p>
+            </div>
+          ) : (
+            <>
+              {/* Show enrolled courses first */}
+              {enrolledCourses && enrolledCourses.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-[var(--neon-purple)] mb-2 px-2">My Enrolled Courses</h3>
+                  {enrolledCourses.map((course) => (
+                    <BoxComponentMobile
+                      key={course.courseId}
+                      setOpenSidebar={setOpenSidebar}
+                      course={course}
+                      show={show}
+                      icon={<Gear />}
+                      title={course.title}
+                      isEnrolled={true}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Show not enrolled courses */}
+              {notEnrolledCourses && notEnrolledCourses.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-[var(--neon-purple)] mb-2 px-2">Available Courses</h3>
+                  {notEnrolledCourses.map((course) => (
+                    <BoxComponentMobile
+                      key={course.courseId}
+                      setOpenSidebar={setOpenSidebar}
+                      course={course}
+                      show={show}
+                      icon={<Gear />}
+                      title={course.title}
+                      isEnrolled={false}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {(!enrolledCourses || enrolledCourses.length === 0) && (!notEnrolledCourses || notEnrolledCourses.length === 0) && (
+                <div className="px-4 py-3 bg-[#040C19] border border-[var(--neon-purple)] text-center">
+                  <p className="text-sm text-gray-400">No courses available</p>
+                </div>
+              )}
+            </>
+          )}
+          
           <BoxComponentMobile
             setOpenSidebar={setOpenSidebar}
             href={"/dashboard/introductory"}
             show={show}
             icon={<BulbIcon />}
-            title={"Introductory"}
+            title={"Learn Properly"}
             introductory={true}
           />
           <BoxComponentMobile
@@ -290,14 +308,14 @@ const SideBar = ({ openSidebar, setOpenSidebar, avatar }) => {
             href={"/dashboard/profile"}
             show={show}
             icon={
-              <div className="bg-gray-300  rounded-full w-6 h-6 relative">
+              <div className="bg-gray-300 rounded-full w-6 h-6 relative">
                 <Image
                   src={avatar || "/profilepic.jpeg"}
                   alt="Profile pic"
                   layout="fill"
                   objectFit="cover"
                   className="rounded-full"
-                />{" "}
+                />
               </div>
             }
             title={"Profile"}
@@ -334,10 +352,11 @@ const BoxComponent = ({
   icon,
   title,
   introductory,
-  title1,
-  title2,
+  enrolledCourses,
+  notEnrolledCourses,
+  coursesLoading,
+  coursesError,
   show,
-  href,
 }) => {
   const [isOpenBoxDropdown, setIsOpenBoxDropdown] = useState(false);
   const router = useRouter();
@@ -347,7 +366,6 @@ const BoxComponent = ({
     if (introductory) {
       router.push("/dashboard/introductory");
     } else {
-      
       setIsOpenBoxDropdown((prev) => !prev);
     }
   };
@@ -400,9 +418,10 @@ const BoxComponent = ({
 
       {isOpenBoxDropdown && (
         <BoxDropdown
-          href={href}
-          title1={title1}
-          title2={title2}
+          enrolledCourses={enrolledCourses}
+          notEnrolledCourses={notEnrolledCourses}
+          coursesLoading={coursesLoading}
+          coursesError={coursesError}
           setIsOpenBoxDropdown={setIsOpenBoxDropdown}
         />
       )}
@@ -410,36 +429,84 @@ const BoxComponent = ({
   );
 };
 
-const BoxDropdown = ({ title1, title2, href, setIsOpenBoxDropdown }) => {
+const BoxDropdown = ({ enrolledCourses, notEnrolledCourses, coursesLoading, coursesError, setIsOpenBoxDropdown }) => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const handleClick = (title) => {
-     dispatch(setSidebarTabIndex(0));
-       dispatch(setCourseType(title === "Photoshop" ? "photoshop" : "premier-pro"));
-    router.push(href);
+  
+  const handleCourseClick = (course) => {
+    if (course.isEnrolled) {
+      dispatch(setSidebarTabIndex(0));
+      dispatch(setCourseType(course.courseId));
+      dispatch(setCourseId(course.courseId));
+      router.push(`/dashboard/player-dashboard/${course.courseId}`);
+    } else {
+      // Navigate to cart with courseId as URL parameter
+      router.push(`/mycart?courseId=${course.courseId}`);
+    }
     setIsOpenBoxDropdown(false);
   };
+
+  // ... rest of the component ...
+
   return (
     <motion.div
-      className="absolute top-full left-0 right-0 w-full border-x border-b border-[var(--neon-purple)] bg-[#040C19] px-4 py-2 z-10 overflow-hidden"
+      className="absolute top-full left-0 right-0 w-full border-x border-b border-[var(--neon-purple)] bg-[#040C19] px-4 py-2 z-10 overflow-y-auto max-h-80"
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: "auto", opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <div className="flex flex-col gap-y-1">
-        <span
-                onClick={() => handleClick(title1)}
-          className="block px-3 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
-        >
-          {title1}
-        </span>
-        <span
-                onClick={() => handleClick(title2)}
-          className="block px-3 py-2 text-md text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer"
-        >
-          {title2}
-        </span>
-      </div>
+      {/* Enrolled Courses Section */}
+      {enrolledCourses && enrolledCourses.length > 0 && (
+        <>
+          <div className="flex flex-col gap-y-1 mb-4">
+            {enrolledCourses.map(course => (
+              <span
+                key={course.courseId}
+                onClick={() => handleCourseClick(course)}
+                className="block px-3 py-2 text-sm text-white hover:text-[var(--yellow)] hover:bg-[#0e1624] transition-colors duration-200 cursor-pointer flex justify-between items-center"
+              >
+                {course.title}
+                <ArrowRight size={21} />
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+      
+      {/* Not Enrolled Courses Section */}
+      {notEnrolledCourses && notEnrolledCourses.length > 0 && (
+        <>
+          <div className="flex flex-col gap-y-1">
+            {notEnrolledCourses.map(course => (
+              <div
+                key={course.courseId}
+                className="px-3 py-2 hover:bg-[#0e1624] transition-colors duration-200 flex justify-between items-center"
+              >
+                <span
+                  onClick={() => handleCourseClick(course)}
+                  className="text-sm text-white hover:text-[var(--yellow)] cursor-pointer flex-grow"
+                >
+                  {course.title}
+                </span>
+                <button 
+                  onClick={() => {
+                    // Navigate to cart with courseId as URL parameter
+                    router.push(`/mycart?courseId=${course.courseId}`);
+                    setIsOpenBoxDropdown(false);
+                  }}
+                  className="text-[14px] text-white px-2 rounded border-2 border-[var(--neon-purple)] hover:bg-purple-900/30 transition-colors"
+                >
+                  Get
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      
+      {(!enrolledCourses || enrolledCourses.length === 0) && (!notEnrolledCourses || notEnrolledCourses.length === 0) && (
+        <p className="text-sm text-gray-400 text-center py-2">No courses available</p>
+      )}
     </motion.div>
   );
 };
@@ -450,31 +517,16 @@ const BoxComponentMobile = ({
   icon,
   title,
   introductory,
-  title1,
-  title2,
+  isEnrolled,
+  course,
   show,
-  href,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const boxRefMobile = useRef(null);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        boxRefMobile.current &&
-        !boxRefMobile.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // ... existing code ...
 
   const handleClick = () => {
     if (introductory) {
@@ -483,8 +535,16 @@ const BoxComponentMobile = ({
     } else if (profileMobile) {
       router.push("/dashboard/profile");
       setOpenSidebar(false);
-    } else {
-      setIsOpen((prev) => !prev);
+    } else if (isEnrolled && course) {
+      dispatch(setSidebarTabIndex(0));
+      dispatch(setCourseType(course.courseId));
+      dispatch(setCourseId(course.courseId));
+      router.push(`/dashboard/player-dashboard/${course.courseId}`);
+      setOpenSidebar(false);
+    } else if (course) {
+      // Navigate to cart with courseId as URL parameter
+      router.push(`/mycart?courseId=${course.courseId}`);
+      setOpenSidebar(false);
     }
   };
 
@@ -507,11 +567,22 @@ const BoxComponentMobile = ({
             <span className="text-[9px] text-orange-300 rounded-sm bg-red-950 px-2 py-[1px] ml-2">
               Free
             </span>
+          ) : isEnrolled ? (
+            <span className="text-[10px] bg-green-900 text-green-300 px-2 py-0.5 rounded">
+            
+            </span>
           ) : (
             !profileMobile && (
-              <div className="cursor-pointer ml-3">
-                {isOpen ? <ChevronUp /> : <ChevronDown />}
-              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent div click
+                  router.push(`/mycart?courseId=${course.courseId}`);
+                  setOpenSidebar(false);
+                }}
+                className="text-[10px] bg-[var(--neon-purple)] text-white px-2 py-0.5 rounded hover:bg-purple-600 transition-colors"
+              >
+                Get
+              </button>
             )
           )}
         </div>
@@ -520,49 +591,7 @@ const BoxComponentMobile = ({
           <NeonElipse />
         </div>
       </div>
-
-      {isOpen && (
-        <BoxDropdownMobile
-          title1={title1}
-          title2={title2}
-          href={href}
-          setOpenSidebar={setOpenSidebar}
-        />
-      )}
     </div>
-  );
-};
-
-const BoxDropdownMobile = ({ setOpenSidebar, title1, title2, href }) => {
-  const router = useRouter();
-
-  const handleClick = (path) => {
-    router.push(path);
-    setOpenSidebar(false);
-  };
-
-  return (
-    <motion.div
-      className="w-full border-x border-b border-[var(--neon-purple,#C99BFD)] bg-[#040C19] 
-        px-4 py-2 flex flex-col gap-y-2 "
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: "auto", opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-    >
-      <button
-        className="text-xs text-white flex justify-between w-full"
-        onClick={() => handleClick(href)}
-      >
-        {title1} <ArrowRight size={21} />
-      </button>
-      <button
-        className="text-xs text-white flex justify-between w-full"
-        onClick={() => handleClick(href)}
-      >
-        {title2} <ArrowRight size={21} />
-      </button>
-    </motion.div>
   );
 };
 
