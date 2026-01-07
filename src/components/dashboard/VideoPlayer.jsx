@@ -33,7 +33,6 @@ import { ChevronRight } from "lucide-react";
 import { cdnDomain } from "@/lib/functions";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import Shaka Player
 // import shaka from 'shaka-player/dist/shaka-player.ui.js';
 import 'shaka-player/dist/controls.css';
 
@@ -49,16 +48,20 @@ const VideoPlayer = ({
   ref,
   registerVideoRef,
   autoPlay,
-  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-14   w-14" />,
+  playIcon = <FaPlay className="control-icons play-pause-restart cursor-pointer h-20 w-20" />,
   latestVideo = false,
   onPlayChange = () => {},
+    onPlay = () => {},
+  onPause = () => {},
+  onEnded = () => {},
   showTimeStamp,
   setShowTimeStamp,
   iscourse,
   forward,
   chapterRef,
   chapters,
-  setIsCompleted=false
+  
+  setIsCompleted = false
 }) => {
 
   const sidebarTabIndex = useSelector((state) => state.general.sidebarTabIndex);
@@ -66,7 +69,7 @@ const VideoPlayer = ({
   const [firstPlay, setFirstPlay] = useState(true);
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState(720);
+  const [selectedQuality, setSelectedQuality] = useState(1080);
   const [selectedLang, setSelectedLang] = useState([source]);
   const [maxWatchTime, setMaxWatchTime] = useState(0);
 
@@ -98,108 +101,212 @@ const VideoPlayer = ({
   const playbackOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
   const imgSrc = poster;
-  const [src, setSrc] = useState(`${cdnDomain}/${source}/720p.m3u8`);
+  // const [src, setSrc] = useState(`${cdnDomain}/${source}/1080p.mpd`);
 
-  // DRM configuration (update with your actual DRM config)
-  // const drmConfig = {
-  //   drm: {
-  //     servers: {
-  //       'com.widevine.alpha': 'https://your-license-server.com/widevine',
-  //       'com.microsoft.playready': 'https://your-license-server.com/playready'
-  //     }
-  //   }
-  // };
+  // DRM configuration
+  // const assetId = "y"; // Your testing asset ID
+// const checkAudioStatus = () => {
+//   if (!videoRef.current) return;
+  
+//   console.log('=== AUDIO STATUS ===');
+//   console.log('Volume:', videoRef.current.volume);
+//   console.log('Muted:', videoRef.current.muted);
+//   console.log('Paused:', videoRef.current.paused);
+//   console.log('Ready state:', videoRef.current.readyState);
+//   console.log('Current time:', videoRef.current.currentTime);
+//   console.log('Duration:', videoRef.current.duration);
 
+//   console.log('====================');
+// };
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Initialize Shaka Player
 useEffect(() => {
   if (!isClient || !videoRef.current) return;
 
-  async function initShaka() {
-    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
-    // install polyfills
-    shaka.polyfill.installAll();
+  const initShaka = async () => {
+    try {
+      const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+      console.log("🎬 Shaka imported successfully");
 
-    if (!shaka.Player.isBrowserSupported()) {
-      console.error("Browser not supported by Shaka Player!");
-      return;
-    }
+      shaka.polyfill.installAll();
+      console.log(" Polyfills installed");
 
-    const player = new shaka.Player(videoRef.current);
-    playerRef.current = player;
+      if (shaka.polyfill.PatchedMediaKeysApple) {
+        shaka.polyfill.PatchedMediaKeysApple.install();
+        console.log(" PatchedMediaKeysApple installed");
+      }
 
-    player.addEventListener("error", onPlayerError);
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error(" Shaka Player not supported in this browser");
+        return;
+      }
 
-    // DRM config
-    // player.configure(drmConfig);
+      const player = new shaka.Player(videoRef.current);
+      playerRef.current = player;
+      if (typeof window !== "undefined") window.player = player;
 
-    // Load your video
-    loadSource(player, src);
+      // FairPlay certificate
+      const getFairPlayCertificate = async () => {
+        const certUrl = "https://fairplay.keyos.com/api/v4/getCertificate?certHash=4bb365045b1f0973a0b782a6e3a76272";
+        const res = await fetch(certUrl);
+        if (!res.ok) throw new Error(` FairPlay cert fetch failed: ${res.status}`);
+        const cert = await res.arrayBuffer();
+        return new Uint8Array(cert);
+      };
+
+      const cert = await getFairPlayCertificate();
+
+      // DRM configuration
+      player.configure({
+        drm: {
+          servers: {
+            "com.widevine.alpha": "https://widevine.keyos.com/api/v4/getLicense",
+            "com.microsoft.playready": "https://playready.keyos.com/api/v4/getLicense",
+            "com.apple.fps.1_0": "https://fairplay.keyos.com/api/v4/getLicense",
+          },
+          advanced: {
+            "com.apple.fps.1_0": { serverCertificate: cert },
+          },
+        },
+      });
+
+      // FairPlay initDataTransform
+      player.configure('drm.initDataTransform', (initData, initDataType) => {
+  if (initDataType === 'skd') {
+    const skdUri = shaka.util.StringUtils.fromBytesAutoDetect(initData);
+    const contentId = skdUri.split('skd://')[1];
+    if (typeof window !== 'undefined') window.contentId = contentId;
+
+    const cert = player.drmInfo()?.serverCertificate || cert;
+
+    return shaka.util.FairPlayUtils.initDataTransform(initData, contentId, cert);
   }
+
+  return initData;
+});
+
+      // LICENSE REQUEST FILTER
+      player.getNetworkingEngine().registerRequestFilter(async (type, request) => {
+        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+        try {
+          const res = await fetch(`https://api.ravallusion.com/api/v1/video/getlicense/header?assetId=${source}`);
+          const data = await res.json();
+          if (data.headers?.["x-keyos-authorization"]) {
+            request.headers["x-keyos-authorization"] = data.headers["x-keyos-authorization"];
+          }
+
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (isSafari) {
+            const originalPayload = new Uint8Array(request.body);
+            const base64Payload = shaka.util.Uint8ArrayUtils.toStandardBase64(originalPayload);
+            const contentId = window.contentId || source;
+            const params = `spc=${base64Payload}&assetId=${contentId}`;
+            request.body = shaka.util.StringUtils.toUTF8(params);
+            request.headers["Content-Type"] = "text/plain";
+          }
+        } catch (err) {
+          console.error("License Request Filter Error:", err);
+        }
+      });
+
+      // LICENSE RESPONSE FILTER 
+      player.getNetworkingEngine().registerResponseFilter((type, response) => {
+        if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) return;
+
+        try {
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (!isSafari) return;
+
+          let responseText = shaka.util.StringUtils.fromUTF8(response.data).trim();
+          let licenseData = responseText;
+
+          response.data = shaka.util.Uint8ArrayUtils.fromBase64(licenseData).buffer;
+          console.log(" License response processed for FairPlay", response.data);
+        
+
+        } catch (err) {
+          console.error("License Response Filter Error:", err);
+        }
+      });
+
+      await loadSource(player);
+
+    } catch (err) {
+      console.error("Shaka Init Error:", err);
+    }
+  };
 
   initShaka();
 
   return () => {
-    if (playerRef.current) {
-      playerRef.current.destroy();
-      playerRef.current = null;
+    if (playerRef.current) playerRef.current.destroy();
+    playerRef.current = null;
+    delete window.player;
+    delete window.contentId;
+  };
+}, [isClient, source]);
+
+// Load Source
+const loadSource = async (player) => {
+  try {
+    setLoading(true);
+    const shaka = await import("shaka-player/dist/shaka-player.compiled.js");
+    const support = await shaka.Player.probeSupport();
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const manifestUri = isSafari || support?.manifest?.hls
+      ? `${cdnDomain}/${source}/hls/1080p.m3u8`
+      : `${cdnDomain}/${source}/1080p.mpd`;
+
+    await player.load(manifestUri);
+    const video = videoRef.current;
+ console.log("✅ Video source loaded");
+    console.log("🎬 Video element readyState:", video.readyState);
+    console.log("🎬 Video element networkState:", video.networkState);
+
+    // Enhanced track logging
+    const tracks = player.getVariantTracks();
+    const currentTrack = player.getVariantTracks().find(t => t.active);
+    
+    console.log(" Track Information:", {
+      totalTracks: tracks.length,
+      currentTrack: currentTrack ? {
+        bandwidth: currentTrack.bandwidth,
+        codecs: currentTrack.codecs,
+        width: currentTrack.width,
+        height: currentTrack.height,
+        frameRate: currentTrack.frameRate,
+        active: currentTrack.active
+      } : 'No active track'
+    });
+    if (!video) return;
+
+    // Video events
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("ended", handleEnded);
+    video.addEventListener("waiting", handleBuffer);
+    video.addEventListener("playing", handleBufferEnd);
+    video.addEventListener("canplay", handleReady);
+
+    video.volume = volume;
+    video.playbackRate = playbackSpeed;
+    if (lastPositon > 0) video.currentTime = lastPositon;
+
+    if (autoPlay && firstPlay) {
+      setFirstPlay(false);
+      setPlaying(true);
+      onPlayChange(true);
+      try { await video.play(); } catch (err) { console.error("Autoplay failed:", err); }
     }
-  };
-}, [isClient, src]);
 
-
-  // Load source with Shaka Player
-  const loadSource = async (player, sourceUrl) => {
-    try {
-      setLoading(true);
-      await player.load(sourceUrl);
-      setLoading(false);
-      
-      // Set up event listeners
-      videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
-      videoRef.current.addEventListener('durationchange', handleDurationChange);
-      videoRef.current.addEventListener('ended', handleEnded);
-      videoRef.current.addEventListener('waiting', handleBuffer);
-      videoRef.current.addEventListener('playing', handleBufferEnd);
-      videoRef.current.addEventListener('canplay', handleReady);
-      
-      // Set initial volume
-      videoRef.current.volume = volume;
-      
-      // Set initial playback rate
-      videoRef.current.playbackRate = playbackSpeed;
-      
-      // Seek to last position if available
-      if (lastPositon > 0) {
-        videoRef.current.currentTime = lastPositon;
-      }
-      
-      // Auto play if needed
-      if (autoPlay && firstPlay) {
-        setFirstPlay(false);
-        setPlaying(true);
-        onPlayChange(true);
-        await videoRef.current.play();
-      }
-    } catch (error) {
-  // console.error("Error loading video:", error);
-  if (error && error.code) {
-    // console.error("Shaka Error Code:", error.code, error);
-  } else {
-    // console.error("Raw Error:", JSON.stringify(error, null, 2));
+    setLoading(false);
+  } catch (err) {
+    console.error("loadSource error:", err);
+    setLoading(false);
   }
-}
-
-  };
-
-  // Player error handler
-  const onPlayerError = (error) => {
-    // console.error('Error code', error.code, 'object', error);
-    toast.error("An error occurred while loading the video");
-  };
+};
 
   const isIOS = () => {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -314,20 +421,19 @@ useEffect(() => {
     }
   };
 
-useEffect(() => {
-  const foundVideo = courseProgress?.data?.courseProgress?.find(
-    (v) => v.video === videoId
-  );
+  useEffect(() => {
+    const foundVideo = courseProgress?.data?.courseProgress?.find(
+      (v) => v.video === videoId
+    );
 
-  if (foundVideo) {
-    setIsVideoCompleted(foundVideo.isCompleted === true);
-    setLastPosition(foundVideo.lastPosition || 0);
-  } else {
-    setIsVideoCompleted(false);
-    setLastPosition(0);
-  }
-}, [courseProgress, videoId]);
-
+    if (foundVideo) {
+      setIsVideoCompleted(foundVideo.isCompleted === true);
+      setLastPosition(foundVideo.lastPosition || 0);
+    } else {
+      setIsVideoCompleted(false);
+      setLastPosition(0);
+    }
+  }, [courseProgress, videoId]);
 
   useEffect(() => {
     setIsVideoFullScreen && setIsVideoFullScreen(isFullScreen);
@@ -481,30 +587,33 @@ useEffect(() => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  useEffect(() => {
-  // Reset all playback states whenever new video is loaded
+
+useEffect(() => {
+  // Reset playback states for new video
   setFirstPlay(true);
   setPlaying(false);
   setShowRestartButton(false);
   setIsVideoCompleted(false);
-  // setIsCompleted(false);   // reset parent completion flag too
   setCurrentTime(0);
   setPlayed(0);
   setDuration(0);
   setMaxWatchTime(0);
   setHoveredTime(null);
   setCurrentChapter("");
-  
-  // Reset video element state
-  if (videoRef.current) {
-    videoRef.current.currentTime = 0;
-    videoRef.current.pause();
-  }
+  setLastPosition(0);
 
-  // Clear progress interval
+  // Reset watch time
+  if (setWatchTime) setWatchTime(0);
+
+  // Clear previous interval
   if (intervalId) {
     clearInterval(intervalId);
     setIntervalId(null);
+  }
+
+  if (videoRef.current) {
+    videoRef.current.currentTime = 0;
+    videoRef.current.pause();
   }
 }, [videoId, source]);
 
@@ -519,41 +628,40 @@ useEffect(() => {
   }, [intervalId]);
 
   // Event handlers for video events
-const handleTimeUpdate = () => {
-  if (!videoRef.current) return;
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
 
-  const currentTime = videoRef.current.currentTime;
-  const duration = videoRef.current.duration;
-  const played = (currentTime / duration) * 100;
+    const currentTime = videoRef.current.currentTime;
+    const duration = videoRef.current.duration;
+    const played = (currentTime / duration) * 100;
 
-  setCurrentTime(currentTime);
-  setPlayed(played);
+    setCurrentTime(currentTime);
+    setPlayed(played);
 
-  // Update progress bar
-  if (progressRef.current) {
-    const progressBar = progressRef.current;
-    const progressColor = `linear-gradient(to right, #2C68F6 ${
-      played + 0.1
-    }%, rgba(255,255,255,0.6) ${played}%, rgba(255,255,255,0.6) 100%)`;
-    progressBar.style.background = progressColor;
-  }
-
-  // Update chapters if available
-  if (chapters?.length > 0) {
-    const current =
-      [...chapters].reverse().find((ch) => currentTime >= ch.time) ||
-      chapters[0];
-    if (current.title !== currentChapter) {
-      setCurrentChapter(current.title);
+    // Update progress bar
+    if (progressRef.current) {
+      const progressBar = progressRef.current;
+      const progressColor = `linear-gradient(to right, #2C68F6 ${
+        played + 0.1
+      }%, rgba(255,255,255,0.6) ${played}%, rgba(255,255,255,0.6) 100%)`;
+      progressBar.style.background = progressColor;
     }
-  }
 
-  // ✅ Only ever increase maxWatchTime
-  if (!isVideoCompleted) {
-    setMaxWatchTime((prev) => Math.max(prev, currentTime));
-  }
-};
+    // Update chapters if available
+    if (chapters?.length > 0) {
+      const current =
+        [...chapters].reverse().find((ch) => currentTime >= ch.time) ||
+        chapters[0];
+      if (current.title !== currentChapter) {
+        setCurrentChapter(current.title);
+      }
+    }
 
+    // ✅ Only ever increase maxWatchTime
+    if (!isVideoCompleted) {
+      setMaxWatchTime((prev) => Math.max(prev, currentTime));
+    }
+  };
 
   const handleDurationChange = () => {
     if (videoRef.current) {
@@ -573,43 +681,49 @@ const handleTimeUpdate = () => {
     setLoading(false);
   };
 
-  const handlePlayPause = async () => {
-    setFirstPlay(false);
-    
-    if (!videoRef.current) return;
-    
-    if (videoRef.current.paused) {
-      setPlaying(true);
-      onPlayChange(true);
-      await videoRef.current.play();
-      
-      // Set up interval for tracking watch time
-      const id = setInterval(() => {
-        if (videoRef.current && setWatchTime) {
-          const currentTime = videoRef.current.currentTime;
-          setWatchTime(currentTime);
-        }
-      }, 5000);
-      setIntervalId(id);
-    } else {
-      setPlaying(false);
-      onPlayChange(false);
-      videoRef.current.pause();
-      
-      if (intervalId) {
-        clearInterval(intervalId);
-        setIntervalId(null);
+const handlePlayPause = async () => {
+  setFirstPlay(false);
+  
+  if (!videoRef.current) return;
+
+  if (videoRef.current.paused) {
+    setPlaying(true);
+    onPlayChange(true);
+    onPlay(); 
+    await videoRef.current.play();
+
+    // Clear existing interval if any
+    if (intervalId) clearInterval(intervalId);
+
+    // Set up new interval
+    const id = setInterval(() => {
+      if (videoRef.current && setWatchTime) {
+        setWatchTime(videoRef.current.currentTime);
       }
+    }, 5000);
+    setIntervalId(id);
+
+  } else {
+    setPlaying(false);
+    onPlayChange(false);
+    onPause();
+    videoRef.current.pause();
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
     }
-    
-    setShowRestartButton(false);
-  };
+  }
+
+  setShowRestartButton(false);
+};
 
   const handleEnded = async () => {
     setPlaying(false);
     setShowRestartButton(true);
     setIsVideoCompleted(true);
     setIsCompleted(true);
+     onEnded(); 
     
     try {
       // Your refetch logic here
@@ -792,41 +906,46 @@ const handleTimeUpdate = () => {
     onPlayChange(true); 
   };
 
-const handleQualityChange = async (quality) => {
-  if (!playerRef.current || !videoRef.current) return;
+  const handleQualityChange = async (quality) => {
+    if (!playerRef.current || !videoRef.current) return;
 
-  setSelectedQuality(quality);
-  const newSrc = `${cdnDomain}/${source}/${quality}p.m3u8`;
-  const currentTime = videoRef.current.currentTime;
-  const wasPlaying = !videoRef.current.paused;
+    setSelectedQuality(quality);
+    const currentTime = videoRef.current.currentTime;
+    const wasPlaying = !videoRef.current.paused;
 
-  try {
-    // Show loader on top of current frame
-    setLoading(true);
+    try {
+      // Show loader on top of current frame
+      setLoading(true);
 
-    // Pause playback temporarily
-    videoRef.current.pause();
+      // Pause playback temporarily
+      videoRef.current.pause();
+  const shaka = await import('shaka-player/dist/shaka-player.ui.js');
+      // Detect which manifest to use for new quality
+         const support = shaka.Player.probeSupport?.();
+    const isHlsSupported = support?.supportedManifestTypes?.includes('hls') ?? false;
+      const newManifestUri = isHlsSupported 
+        ? `${cdnDomain}/${source}/hls/${quality}p.m3u8`
+        : `${cdnDomain}/${source}/1080p.mpd`;
 
-    // Load new quality
-    await playerRef.current.load(newSrc);
+      // Load new quality
+      await playerRef.current.load(newManifestUri);
 
-    // Restore playback position
-    videoRef.current.currentTime = currentTime;
+      // Restore playback position
+      videoRef.current.currentTime = currentTime;
 
-    if (wasPlaying) {
-      await videoRef.current.play();
+      if (wasPlaying) {
+        await videoRef.current.play();
+      }
+    } catch (error) {
+      console.error("Error switching quality:", error);
+      toast.error("Unable to switch video quality");
+    } finally {
+      // Hide loader after new video is ready
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error switching quality:", error);
-    toast.error("Unable to switch video quality");
-  } finally {
-    // Hide loader after new video is ready
-    setLoading(false);
-  }
 
-  toggleSettings();
-};
-
+    toggleSettings();
+  };
 
   const settingsMenu = () => {
     return (
@@ -1084,7 +1203,7 @@ const handleQualityChange = async (quality) => {
             <div className="flex">
               <div className="volume-wrapper flex items-center ">
                 {volumeIcon()}
-                {isTouchDevice ? null : (
+                {!isTouchDevice ? null : (
                   <input
                     type="range"
                     className="volume-track"
