@@ -150,7 +150,7 @@ const VideoCard = ({ img, heading, description, duration, videoId, level, course
                 )}
             </motion.div>
 
-            <div className='p-2'>
+            <div className='p-1'>
                 <div className="flex items-start gap-2">
                     {!isEnrolled && (
                         <Lock size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
@@ -159,9 +159,9 @@ const VideoCard = ({ img, heading, description, duration, videoId, level, course
                         <h1 className={`text-sm font-semibold line-clamp-2 ${!isEnrolled ? 'text-gray-400' : ''}`}>
                             {heading}
                         </h1>
-                        <p className={`text-xs font-medium line-clamp-2 ${!isEnrolled ? 'text-gray-500' : 'text-gray-300'}`}>
+                        {/* <p className={`text-xs font-medium line-clamp-2 ${!isEnrolled ? 'text-gray-500' : 'text-gray-300'}`}>
                             {description}
-                        </p>
+                        </p> */}
                     </div>
                 </div>
             </div>

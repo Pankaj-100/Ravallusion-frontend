@@ -86,7 +86,7 @@ const VideoCard = ({ isBookmarked = false, title, description, thumbnailUrl, vid
                     )}
                 </div>
 
-                {/* <p className="text-xs text-gray-400 line-clamp-2">{description}</p> */}
+                <p className="text-sm text-gray-400 line-clamp-2">{description}</p>
             </div>
         </motion.div>
     );
